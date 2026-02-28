@@ -102,8 +102,35 @@ function MarketCard({
         </p>
       )}
 
-      {/* Top outcomes */}
-      {market.markets && market.markets.length > 0 && (
+      {/* Sub-markets preview (multi-outcome) */}
+      {market.subMarkets && market.subMarkets.length > 1 ? (
+        <div className="space-y-1 mb-2">
+          {market.subMarkets.slice(0, 3).map((sm, i) => (
+            <div key={i} className="flex items-center justify-between text-xs">
+              <span className="text-muted-foreground truncate mr-2">
+                {sm.groupItemTitle}
+              </span>
+              <span
+                className={cn(
+                  "font-mono font-bold",
+                  sm.yesPrice >= 0.7
+                    ? "text-chart-4"
+                    : sm.yesPrice <= 0.3
+                    ? "text-destructive"
+                    : "text-foreground"
+                )}
+              >
+                {(sm.yesPrice * 100).toFixed(0)}%
+              </span>
+            </div>
+          ))}
+          {market.subMarkets.length > 3 && (
+            <span className="text-[10px] text-muted-foreground">
+              +{market.subMarkets.length - 3} more
+            </span>
+          )}
+        </div>
+      ) : market.markets && market.markets.length > 0 ? (
         <div className="space-y-1 mb-2">
           {market.markets.slice(0, 2).map((outcome, i) => (
             <div key={i} className="flex items-center justify-between text-xs">
@@ -125,20 +152,8 @@ function MarketCard({
             </div>
           ))}
         </div>
-      )}
+      ) : null}
 
-      {/* Sparkline */}
-      {market.sparkline && market.sparkline.length > 1 && (
-        <div className="h-6 flex items-end gap-px">
-          {market.sparkline.slice(-20).map((v, i) => (
-            <div
-              key={i}
-              className="flex-1 bg-primary/30 group-hover:bg-primary/50 rounded-sm transition-colors"
-              style={{ height: `${Math.max(v * 100, 8)}%` }}
-            />
-          ))}
-        </div>
-      )}
     </button>
   );
 }

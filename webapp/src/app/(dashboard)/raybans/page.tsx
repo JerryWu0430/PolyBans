@@ -199,7 +199,7 @@ export default function RayBansPage() {
           {/* Right side - clock */}
           <div className="flex items-center gap-1.5 text-xs font-mono text-muted-foreground">
             <Clock className="h-3 w-3" />
-            <span>{currentTime.toLocaleTimeString("en-US", { hour12: false })}</span>
+            <span suppressHydrationWarning>{currentTime.toLocaleTimeString("en-US", { hour12: false })}</span>
           </div>
         </div>
 

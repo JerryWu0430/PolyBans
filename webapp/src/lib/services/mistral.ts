@@ -24,9 +24,21 @@ export interface AnalysisSignal {
   queries: string[];
   tag: MarketTag | null;
   reason: string;
+  // Strategic analysis (populated by analyzeStrategy)
+  strategy?: StrategyAnalysis;
 }
 
-const RESPONSE_SCHEMA = {
+export interface StrategyAnalysis {
+  summary: string;           // 2-3 sentence strategic overview
+  edge: string | null;       // Detected edge from transcript context
+  undervalued: string | null; // Which outcome seems undervalued and why
+  sentiment: "bullish" | "bearish" | "neutral" | "mixed";
+  confidence: "low" | "medium" | "high";
+  risk: string;              // Key risk to watch
+}
+
+// Schema for initial detection
+const DETECTION_SCHEMA = {
   type: "object",
   properties: {
     detected: {
@@ -53,6 +65,42 @@ const RESPONSE_SCHEMA = {
     },
   },
   required: ["detected", "queries", "reason"],
+} as const;
+
+// Schema for strategic analysis
+const STRATEGY_SCHEMA = {
+  type: "object",
+  properties: {
+    summary: {
+      type: "string",
+      description: "2-3 sentence strategic analysis combining transcript context with market odds",
+    },
+    edge: {
+      type: "string",
+      description: "Information edge detected from transcript that market may not have priced in. Null if none.",
+      nullable: true,
+    },
+    undervalued: {
+      type: "string",
+      description: "Which specific outcome appears undervalued based on transcript context vs current odds, with brief reasoning. Null if none clear.",
+      nullable: true,
+    },
+    sentiment: {
+      type: "string",
+      enum: ["bullish", "bearish", "neutral", "mixed"],
+      description: "Overall sentiment from transcript toward the leading outcome",
+    },
+    confidence: {
+      type: "string",
+      enum: ["low", "medium", "high"],
+      description: "Confidence level in the strategic assessment",
+    },
+    risk: {
+      type: "string",
+      description: "Key risk or uncertainty to monitor (max 15 words)",
+    },
+  },
+  required: ["summary", "sentiment", "confidence", "risk"],
 } as const;
 
 // Clean LLM output artifacts (matches tags like <grok:render>...</grok:render>)
@@ -94,7 +142,7 @@ Always respond in valid JSON matching the provided schema.`,
       jsonSchema: {
         name: "polymarket_signal",
         strict: true,
-        schemaDefinition: RESPONSE_SCHEMA,
+        schemaDefinition: DETECTION_SCHEMA,
       },
     },
     temperature: 0.2,
@@ -113,4 +161,91 @@ Always respond in valid JSON matching the provided schema.`,
   if (!result.tag) result.tag = null;
 
   return result;
+}
+
+export interface MarketDataForAnalysis {
+  title: string;
+  outcomes: Array<{
+    name: string;
+    probability: number;
+    volume: number;
+  }>;
+}
+
+/**
+ * Strategic analysis combining transcript context with market data.
+ * Call after markets are fetched to get edge/undervalued insights.
+ */
+export async function analyzeStrategy(
+  transcript: string,
+  market: MarketDataForAnalysis
+): Promise<StrategyAnalysis | null> {
+  try {
+    const now = new Date().toLocaleDateString("en-US", {
+      month: "long",
+      year: "numeric",
+    });
+
+    const marketSummary = market.outcomes
+      .slice(0, 8)
+      .map((o) => `• ${o.name}: ${(o.probability * 100).toFixed(1)}% ($${o.volume.toLocaleString()} vol)`)
+      .join("\n");
+
+    const response = await client.chat.complete({
+      model: MODEL,
+      messages: [
+        {
+          role: "system",
+          content: `You are a sharp prediction market analyst. Current date: ${now}.
+You have access to LIVE CONTEXT from someone at a real event (conference, rally, game) via smart glasses.
+Your job: find information edges the market hasn't priced in yet.
+
+Key analysis angles:
+- Does the transcript reveal insider sentiment, crowd energy, or breaking info?
+- Are current odds misaligned with what you're hearing on the ground?
+- Which outcome is mispriced given the live context?
+- What risk could flip the market?
+
+Be specific. Reference actual transcript details. No hedging.`,
+        },
+        {
+          role: "user",
+          content: `MARKET: ${market.title}
+
+CURRENT ODDS:
+${marketSummary}
+
+LIVE TRANSCRIPT FROM EVENT:
+"${transcript}"
+
+Provide strategic analysis. Which outcome has edge? What's undervalued?`,
+        },
+      ],
+      responseFormat: {
+        type: "json_schema",
+        jsonSchema: {
+          name: "strategy_analysis",
+          strict: true,
+          schemaDefinition: STRATEGY_SCHEMA,
+        },
+      },
+      temperature: 0.3,
+    });
+
+    const raw = response.choices?.[0]?.message?.content;
+    if (!raw || typeof raw !== "string") return null;
+
+    const result = JSON.parse(raw) as StrategyAnalysis;
+
+    // Sanitise
+    if (result.summary) result.summary = cleanText(result.summary);
+    if (result.edge) result.edge = cleanText(result.edge);
+    if (result.undervalued) result.undervalued = cleanText(result.undervalued);
+    if (result.risk) result.risk = cleanText(result.risk);
+
+    return result;
+  } catch (err) {
+    console.error("[mistral] analyzeStrategy error:", err);
+    return null;
+  }
 }

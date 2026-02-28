@@ -14,6 +14,8 @@ interface GammaMarket {
   clobTokenIds?: string; // JSON array string of token IDs
   volume?: string;
   question?: string;
+  groupItemTitle?: string; // Short label for multi-outcome markets
+  slug?: string; // Market slug for embeds
 }
 
 // Transformed structure for UI
@@ -24,13 +26,26 @@ export interface MarketOutcome {
   clobTokenId?: string;
 }
 
+// Sub-market for multi-outcome events
+export interface SubMarket {
+  question: string;
+  groupItemTitle: string;
+  yesPrice: number;
+  noPrice: number;
+  volume: string;
+  clobTokenId: string;
+  slug: string; // For official embed iframe
+  sparkline?: number[];
+}
+
 export interface SearchMarketResult {
   id: string;
   slug: string;
   title: string;
   question: string;
   volume: string;
-  markets: MarketOutcome[];
+  subMarkets: SubMarket[];  // Structured multi-outcome
+  markets: MarketOutcome[]; // Keep for compat
   sparkline: number[];
   image: string | null;
 }
@@ -49,8 +64,7 @@ function parseJsonArray(str: string | undefined): string[] {
 }
 
 /**
- * Transform raw API market data to UI-friendly format.
- * Each GammaMarket has parallel arrays: outcomes=["Yes","No"], outcomePrices=["0.45","0.55"]
+ * Transform raw API market data to UI-friendly format (backward compat).
  */
 function transformMarkets(rawMarkets: GammaMarket[] | undefined): MarketOutcome[] {
   if (!rawMarkets || !Array.isArray(rawMarkets)) return [];
@@ -62,24 +76,49 @@ function transformMarkets(rawMarkets: GammaMarket[] | undefined): MarketOutcome[
     const prices = parseJsonArray(market.outcomePrices);
     const tokenIds = parseJsonArray(market.clobTokenIds);
 
-    // Pair outcomes with their prices
     for (let i = 0; i < outcomes.length && i < 4; i++) {
-      const outcome = outcomes[i] || "Unknown";
-      const price = parseFloat(prices[i]) || 0;
-      const clobTokenId = tokenIds[i];
-
-      console.log(`[polymarket] Outcome: "${outcome}" price=${price}`);
-
       results.push({
-        outcome,
-        price,
+        outcome: outcomes[i] || "Unknown",
+        price: parseFloat(prices[i]) || 0,
         volume: market.volume,
-        clobTokenId,
+        clobTokenId: tokenIds[i],
       });
     }
   }
 
   return results;
+}
+
+/**
+ * Transform raw markets to SubMarket[] for multi-outcome events.
+ * Filters out placeholder markets (null prices, 0 volume).
+ */
+function transformToSubMarkets(rawMarkets: GammaMarket[] | undefined): SubMarket[] {
+  if (!rawMarkets || !Array.isArray(rawMarkets)) return [];
+
+  return rawMarkets
+    .filter((m) => {
+      // Filter out placeholders: null prices or 0 volume
+      const vol = parseFloat(m.volume || "0");
+      const hasPrices = m.outcomePrices && m.outcomePrices !== "null";
+      return hasPrices && vol > 0;
+    })
+    .slice(0, 10)
+    .map((m) => {
+      const prices = parseJsonArray(m.outcomePrices);
+      const tokens = parseJsonArray(m.clobTokenIds);
+      const label = m.groupItemTitle || m.question?.split(" ").slice(-2).join(" ") || "Market";
+
+      return {
+        question: m.question || "",
+        groupItemTitle: label,
+        yesPrice: parseFloat(prices[0]) || 0,
+        noPrice: parseFloat(prices[1]) || 0,
+        volume: m.volume || "0",
+        clobTokenId: tokens[0] || "",
+        slug: m.slug || "",
+      };
+    });
 }
 
 /**
@@ -111,7 +150,7 @@ export async function searchActiveEvents(
   tag?: string | null
 ): Promise<SearchMarketResult[]> {
   try {
-    let url = `${GAMMA_API}/public-search?q=${encodeURIComponent(query)}&events_status=active&limit_per_type=20`;
+    let url = `${GAMMA_API}/public-search?q=${encodeURIComponent(query)}&events_status=active&limit_per_type=20&order=volume&ascending=false`;
     if (tag && tag.toLowerCase() !== "null") {
       url += `&events_tag=${encodeURIComponent(tag.toLowerCase())}`;
     }
@@ -126,15 +165,23 @@ export async function searchActiveEvents(
     const results: SearchMarketResult[] = [];
 
     for (const event of topEvents) {
-      // Transform raw API markets to UI format
+      // Transform to both formats
       const markets = transformMarkets(event.markets);
+      const subMarkets = transformToSubMarkets(event.markets);
 
-      // Fetch sparkline from first outcome's token
-      let sparkline: number[] = [];
-      const firstTokenId = markets[0]?.clobTokenId;
-      if (firstTokenId) {
-        sparkline = await getSparkline(firstTokenId);
-      }
+      // Fetch sparklines for top 5 sub-markets in parallel
+      const sparklinePromises = subMarkets.slice(0, 5).map(async (sm, i) => {
+        if (sm.clobTokenId) {
+          const sparkline = await getSparkline(sm.clobTokenId);
+          console.log(`[polymarket] Sparkline for ${sm.groupItemTitle}: ${sparkline.length} points`);
+          subMarkets[i].sparkline = sparkline;
+        }
+      });
+      await Promise.all(sparklinePromises);
+      console.log(`[polymarket] Event "${event.title}" has ${subMarkets.length} subMarkets`);
+
+      // Event-level sparkline from first market
+      const sparkline = subMarkets[0]?.sparkline || [];
 
       results.push({
         id: event.id,
@@ -142,6 +189,7 @@ export async function searchActiveEvents(
         title: event.title,
         question: event.question || event.title,
         volume: event.volume,
+        subMarkets,
         markets,
         sparkline,
         image: event.image ?? null,
