@@ -103,13 +103,7 @@ export default function RayBansPage() {
     }
   }, [useMockStream, relayTranscripts, appendTranscript, sendTranscript]);
 
-  // When buffer hits 600 chars and flushes → clear the transcript list only
-  useEffect(() => {
-    if (flushCount > 0) {
-      reset(); // clear displayed transcript rows — delta ref stays intact
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [flushCount]);
+  // Note: We no longer clear transcript on buffer flush - transcripts accumulate
 
   const handleChunk = useCallback(
     (chunk: TranscriptChunk) => {

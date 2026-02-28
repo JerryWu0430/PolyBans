@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardAction } from "@/componen
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import { useArbitrageStore } from "@/lib/stores/arbitrageStore";
 import type { Market } from "@/lib/types/polymarket";
@@ -82,7 +83,9 @@ export function MarketTrends() {
         </div>
       </CardHeader>
 
-      <CardContent className="flex-1 overflow-auto py-3 space-y-2">
+      <CardContent className="flex-1 py-3">
+        <ScrollArea className="h-full min-h-0">
+          <div className="space-y-2">
         {loading ? (
           // Loading skeletons
           Array.from({ length: 5 }).map((_, i) => (
@@ -191,6 +194,8 @@ export function MarketTrends() {
             );
           })
         )}
+          </div>
+        </ScrollArea>
       </CardContent>
     </Card>
   );

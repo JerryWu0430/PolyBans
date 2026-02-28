@@ -12,6 +12,7 @@ import {
   Sparkles,
   Target,
 } from "lucide-react";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Dialog,
   DialogContent,
@@ -158,7 +159,7 @@ export function MarketOrderModal() {
                     <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
                       Market Outcomes
                     </span>
-                    <div className="rounded-lg border border-border/30 overflow-hidden max-h-[280px] overflow-y-auto">
+                    <ScrollArea className="rounded-lg border border-border/30 max-h-[280px]">
                       <table className="w-full text-sm">
                         <thead className="bg-muted/40 sticky top-0">
                           <tr className="text-xs text-muted-foreground uppercase">
@@ -202,7 +203,7 @@ export function MarketOrderModal() {
                           ))}
                         </tbody>
                       </table>
-                    </div>
+                    </ScrollArea>
                   </div>
                 )}
 

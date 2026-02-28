@@ -2,6 +2,7 @@
 
 import { cn } from "@/lib/utils";
 import { TrendingUp, Radio } from "lucide-react";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import type { PolymarketMarket } from "@/lib/types/polymarket-stream";
 import { useArbitrageStore } from "@/lib/stores/arbitrageStore";
 
@@ -22,7 +23,7 @@ export function MarketsSidebar({
     <>
       <div
         className={cn(
-          "w-80 border-l border-border/50 flex flex-col bg-card/30",
+          "w-80 border-l border-border/50 flex flex-col bg-card/30 min-h-0",
           className
         )}
       >
@@ -40,29 +41,30 @@ export function MarketsSidebar({
         </div>
 
         {/* Markets List */}
-        <div className="flex-1 overflow-y-auto scrollbar-terminal p-3 space-y-2">
-          {markets.length === 0 ? (
-            <div className="h-full flex flex-col items-center justify-center text-muted-foreground/50 py-8">
-              <TrendingUp className="h-8 w-8 mb-3" />
-              <p className="text-sm font-medium">No markets detected</p>
-              <p className="text-xs mt-1 text-center px-4">
-                {isStreaming
-                  ? "Analyzing transcript..."
-                  : "Start stream to detect markets"}
-              </p>
-            </div>
-          ) : (
-            markets.map((market) => (
-              <MarketCard
-                key={market.id}
-                market={market}
-                onClick={() => openOrderModal(market)}
-              />
-            ))
-          )}
-        </div>
+        <ScrollArea className="flex-1 min-h-0">
+          <div className="p-3 space-y-2">
+            {markets.length === 0 ? (
+              <div className="h-full flex flex-col items-center justify-center text-muted-foreground/50 py-8">
+                <TrendingUp className="h-8 w-8 mb-3" />
+                <p className="text-sm font-medium">No markets detected</p>
+                <p className="text-xs mt-1 text-center px-4">
+                  {isStreaming
+                    ? "Analyzing transcript..."
+                    : "Start stream to detect markets"}
+                </p>
+              </div>
+            ) : (
+              markets.map((market) => (
+                <MarketCard
+                  key={market.id}
+                  market={market}
+                  onClick={() => openOrderModal(market)}
+                />
+              ))
+            )}
+          </div>
+        </ScrollArea>
       </div>
-
     </>
   );
 }

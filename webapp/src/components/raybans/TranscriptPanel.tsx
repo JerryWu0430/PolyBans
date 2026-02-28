@@ -3,6 +3,7 @@
 import { useEffect, useRef } from "react";
 import { cn } from "@/lib/utils";
 import { MessageSquare, Clock } from "lucide-react";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import type { TranscriptChunk } from "@/lib/types/stream";
 
 const HIGHLIGHT_KEYWORDS = [
@@ -27,11 +28,11 @@ export function TranscriptPanel({
   maxChunks = 50,
   className,
 }: TranscriptPanelProps) {
-  const scrollRef = useRef<HTMLDivElement>(null);
+  const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (autoScroll && scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    if (autoScroll && bottomRef.current) {
+      bottomRef.current.scrollIntoView({ behavior: "smooth" });
     }
   }, [chunks, autoScroll]);
 
@@ -58,10 +59,8 @@ export function TranscriptPanel({
       </div>
 
       {/* Transcript content */}
-      <div
-        ref={scrollRef}
-        className="flex-1 overflow-y-auto scrollbar-terminal p-3 space-y-1"
-      >
+      <ScrollArea className="flex-1 min-h-0">
+        <div className="p-3 space-y-1">
         {displayChunks.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full py-8">
             <div className="w-12 h-12 rounded-xl bg-muted/50 border border-border/50 flex items-center justify-center mb-3">
@@ -81,7 +80,9 @@ export function TranscriptPanel({
             />
           ))
         )}
-      </div>
+          <div ref={bottomRef} />
+        </div>
+      </ScrollArea>
 
       {/* Bottom gradient fade */}
       <div className="absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-card to-transparent pointer-events-none" />

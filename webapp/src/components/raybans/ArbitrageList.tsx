@@ -3,6 +3,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import type { ArbitrageOpp } from "@/lib/websocket/types";
 
@@ -33,15 +34,17 @@ export function ArbitrageList({
         {opportunities.length === 0 ? (
           <EmptyState />
         ) : (
-          <div className="space-y-2 max-h-48 overflow-y-auto">
-            {opportunities.map((opp) => (
-              <ArbitrageCard
-                key={opp.id}
-                opportunity={opp}
-                onClick={() => onSelect?.(opp)}
-              />
-            ))}
-          </div>
+          <ScrollArea className="max-h-48">
+            <div className="space-y-2">
+              {opportunities.map((opp) => (
+                <ArbitrageCard
+                  key={opp.id}
+                  opportunity={opp}
+                  onClick={() => onSelect?.(opp)}
+                />
+              ))}
+            </div>
+          </ScrollArea>
         )}
       </CardContent>
     </Card>
