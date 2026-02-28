@@ -6,13 +6,16 @@ import { useArbitrageStore } from "@/lib/stores/arbitrageStore";
 import { useAnalysisPipeline } from "@/lib/hooks/useAnalysisPipeline";
 import { useRelayStream } from "@/lib/hooks/useRelayStream";
 import { useFrameStream } from "@/lib/hooks/useFrameStream";
+import { useVisionSummary } from "@/lib/hooks/useVisionSummary";
 import { startMockStream } from "@/lib/mockStream";
 import { VideoFeed } from "@/components/raybans/VideoFeed";
 import { TranscriptOverlay } from "@/components/raybans/TranscriptOverlay";
+import { VisionSummaryOverlay } from "@/components/raybans/VisionSummaryOverlay";
 import { MarketsSidebar } from "@/components/raybans/MarketsSidebar";
 import { VideoControlBar } from "@/components/raybans/VideoControlBar";
 import { MarketOrderModal } from "@/components/raybans/MarketOrderModal";
 import { Glasses, Clock, Zap, Volume2 } from "lucide-react";
+import { ModeToggle } from "@/components/layout/ModeToggle";
 import type { TranscriptChunk } from "@/lib/types/stream";
 
 export default function RayBansPage() {
@@ -56,6 +59,18 @@ export default function RayBansPage() {
 
   const [isStreaming, setIsStreaming] = useState(false);
   const [useMockStream, setUseMockStream] = useState(true);
+
+  // Vision analysis - only active when streaming real frames
+  const {
+    description: visionDescription,
+    isProcessing: visionProcessing,
+    error: visionError,
+    lastUpdated: visionLastUpdated,
+    reset: resetVision,
+  } = useVisionSummary(frameUrl, {
+    enabled: isStreaming && !useMockStream && !!frameUrl,
+    intervalMs: 5000,
+  });
   const [currentTime, setCurrentTime] = useState(new Date());
   const [ttsText, setTtsText] = useState("");
   const [ttsSending, setTtsSending] = useState(false);
@@ -123,6 +138,7 @@ export default function RayBansPage() {
       disconnectRelay();
       disconnectFrames();
       resetPipeline();
+      resetVision();
     } else {
       setMode("raybans");
       setConnected(true);
@@ -140,6 +156,7 @@ export default function RayBansPage() {
     connectRelay,
     disconnectRelay,
     resetPipeline,
+    resetVision,
   ]);
 
   // Mock stream
@@ -155,8 +172,9 @@ export default function RayBansPage() {
       reset();
       clearOpportunities();
       resetPipeline();
+      resetVision();
     };
-  }, [reset, clearOpportunities, resetPipeline]);
+  }, [reset, clearOpportunities, resetPipeline, resetVision]);
 
   const isLiveConnected = isStreaming || relayState === "connected";
   const connectionState = isStreaming ? "connected" : "disconnected";
@@ -193,10 +211,13 @@ export default function RayBansPage() {
             </div>
           </div>
 
-          {/* Right side - clock */}
-          <div className="flex items-center gap-1.5 text-xs font-mono text-muted-foreground">
-            <Clock className="h-3 w-3" />
-            <span suppressHydrationWarning>{currentTime.toLocaleTimeString("en-US", { hour12: false })}</span>
+          {/* Right side - clock & controls */}
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-1.5 text-xs font-mono text-muted-foreground">
+              <Clock className="h-3 w-3" />
+              <span suppressHydrationWarning>{currentTime.toLocaleTimeString("en-US", { hour12: false })}</span>
+            </div>
+            <ModeToggle />
           </div>
         </div>
 
@@ -223,6 +244,15 @@ export default function RayBansPage() {
               <TranscriptOverlay
                 chunks={transcript}
                 bufferPercent={bufferPercent}
+                isStreaming={isStreaming}
+              />
+              {/* Vision Summary */}
+              <VisionSummaryOverlay
+                description={visionDescription}
+                isProcessing={visionProcessing}
+                error={visionError}
+                lastUpdated={visionLastUpdated}
+                isMock={useMockStream}
                 isStreaming={isStreaming}
               />
             </div>
