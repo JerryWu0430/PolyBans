@@ -62,3 +62,15 @@ export function forwardTranscript(text: string): void {
   if (!ws || ws.readyState !== WebSocket.OPEN) return;
   ws.send(JSON.stringify({ type: "transcript", text }));
 }
+
+export function resetForwarder(): void {
+  enabled = false;
+  if (ws) {
+    ws.removeAllListeners();
+    if (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING) {
+      ws.close();
+    }
+    ws = null;
+  }
+  url = "";
+}
