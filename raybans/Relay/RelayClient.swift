@@ -1,0 +1,125 @@
+import Foundation
+import Combine
+
+// MARK: - Observable wrapper (actors can't conform to ObservableObject)
+
+@MainActor
+final class RelayConnectionStatus: ObservableObject, @unchecked Sendable {
+    @Published var isConnected = false
+}
+
+// MARK: - RelayClient
+
+actor RelayClient {
+    private let frameURL: URL
+    private let transcriptURL: URL
+    private let healthURL: URL
+    private let session: URLSession
+    private let encoder = JSONEncoder()
+    private let decoder = JSONDecoder()
+    let status: RelayConnectionStatus
+
+    init(host: String, port: Int = 8420, status: RelayConnectionStatus = RelayConnectionStatus()) {
+        let base = "http://\(host):\(port)"
+        self.frameURL = URL(string: "\(base)/ingest/frame")!
+        self.transcriptURL = URL(string: "\(base)/ingest/transcript")!
+        self.healthURL = URL(string: "\(base)/health")!
+        let config = URLSessionConfiguration.default
+        config.timeoutIntervalForRequest = 5
+        self.session = URLSession(configuration: config)
+        self.status = status
+    }
+
+    /// Test-only initializer that accepts a custom URLSessionConfiguration (e.g., with MockURLProtocol).
+    init(host: String, port: Int = 8420, configuration: URLSessionConfiguration, status: RelayConnectionStatus = RelayConnectionStatus()) {
+        let base = "http://\(host):\(port)"
+        self.frameURL = URL(string: "\(base)/ingest/frame")!
+        self.transcriptURL = URL(string: "\(base)/ingest/transcript")!
+        self.healthURL = URL(string: "\(base)/health")!
+        self.session = URLSession(configuration: configuration)
+        self.status = status
+    }
+
+    // MARK: - Push Frame (multipart/form-data)
+
+    func pushFrame(_ jpegData: Data) async throws -> FrameResponse {
+        let boundary = "Boundary-\(UUID().uuidString)"
+
+        var request = URLRequest(url: frameURL)
+        request.httpMethod = "POST"
+        request.setValue("multipart/form-data; boundary=\(boundary)", forHTTPHeaderField: "Content-Type")
+
+        // Pre-size buffer: header ~120 bytes + jpeg + trailer ~50 bytes
+        var body = Data(capacity: jpegData.count + 200)
+        body.append("--\(boundary)\r\n")
+        body.append("Content-Disposition: form-data; name=\"frame\"; filename=\"frame.jpg\"\r\n")
+        body.append("Content-Type: image/jpeg\r\n\r\n")
+        body.append(jpegData)
+        body.append("\r\n--\(boundary)--\r\n")
+        request.httpBody = body
+
+        let (data, response) = try await session.data(for: request)
+        try Self.validateHTTP(response, data: data)
+        await setConnected(true)
+        return try decoder.decode(FrameResponse.self, from: data)
+    }
+
+    // MARK: - Push Transcript (JSON POST)
+
+    func pushTranscript(
+        text: String,
+        source: String? = nil,
+        confidence: Double? = nil,
+        language: String? = nil
+    ) async throws -> TranscriptResponse {
+        var request = URLRequest(url: transcriptURL)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+
+        let body = TranscriptRequest(
+            text: text,
+            timestamp: nil,
+            source: source,
+            confidence: confidence,
+            language: language
+        )
+        request.httpBody = try encoder.encode(body)
+
+        let (data, response) = try await session.data(for: request)
+        try Self.validateHTTP(response, data: data)
+        await setConnected(true)
+        return try decoder.decode(TranscriptResponse.self, from: data)
+    }
+
+    // MARK: - Health Check
+
+    func health() async throws -> HealthResponse {
+        let (data, response) = try await session.data(from: healthURL)
+        try Self.validateHTTP(response, data: data)
+
+        await setConnected(true)
+        return try decoder.decode(HealthResponse.self, from: data)
+    }
+
+    // MARK: - Helpers
+
+    private func setConnected(_ value: Bool) async {
+        await MainActor.run { status.isConnected = value }
+    }
+
+    private static func validateHTTP(_ response: URLResponse, data: Data) throws {
+        guard let http = response as? HTTPURLResponse else { throw RelayError.noData }
+        guard (200...299).contains(http.statusCode) else {
+            let message = String(data: data, encoding: .utf8) ?? "Unknown error"
+            throw RelayError.httpError(statusCode: http.statusCode, message: message)
+        }
+    }
+}
+
+// MARK: - Data + string append helper
+
+private extension Data {
+    mutating func append(_ string: String) {
+        if let d = string.data(using: .utf8) { append(d) }
+    }
+}
