@@ -21,6 +21,9 @@ interface ArbitrageState {
   latestAnalysis: PolymarketAnalysis | null;
   isBuffering: boolean;
   bufferProgress: BufferingState | null;
+  // Market order modal
+  selectedMarketForOrder: PolymarketMarket | null;
+  isOrderModalOpen: boolean;
 }
 
 interface ArbitrageActions {
@@ -33,6 +36,9 @@ interface ArbitrageActions {
   setLatestAnalysis: (analysis: PolymarketAnalysis) => void;
   setBuffering: (buffering: BufferingState | null) => void;
   clearStreamedMarkets: () => void;
+  // Market order modal
+  openOrderModal: (market: PolymarketMarket) => void;
+  closeOrderModal: () => void;
 }
 
 export const useArbitrageStore = create<ArbitrageState & ArbitrageActions>(
@@ -47,6 +53,8 @@ export const useArbitrageStore = create<ArbitrageState & ArbitrageActions>(
     latestAnalysis: null,
     isBuffering: false,
     bufferProgress: null,
+    selectedMarketForOrder: null,
+    isOrderModalOpen: false,
 
     addOpportunity: (opp) =>
       set((state) => {
@@ -87,6 +95,12 @@ export const useArbitrageStore = create<ArbitrageState & ArbitrageActions>(
         isBuffering: false,
         bufferProgress: null,
       }),
+
+    openOrderModal: (market) =>
+      set({ selectedMarketForOrder: market, isOrderModalOpen: true }),
+
+    closeOrderModal: () =>
+      set({ selectedMarketForOrder: null, isOrderModalOpen: false }),
   })
 );
 

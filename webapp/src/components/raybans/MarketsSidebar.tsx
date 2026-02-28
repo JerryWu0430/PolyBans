@@ -1,20 +1,10 @@
 "use client";
 
-import { useState } from "react";
 import { cn } from "@/lib/utils";
-import {
-  TrendingUp,
-  ExternalLink,
-  X,
-  Radio,
-} from "lucide-react";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { TrendingUp, Radio } from "lucide-react";
 import type { PolymarketMarket } from "@/lib/types/polymarket-stream";
+import { useArbitrageStore } from "@/lib/stores/arbitrageStore";
+import { MarketOrderModal } from "./MarketOrderModal";
 
 interface MarketsSidebarProps {
   markets: PolymarketMarket[];
@@ -27,7 +17,7 @@ export function MarketsSidebar({
   isStreaming = false,
   className,
 }: MarketsSidebarProps) {
-  const [selectedMarket, setSelectedMarket] = useState<PolymarketMarket | null>(null);
+  const openOrderModal = useArbitrageStore((s) => s.openOrderModal);
 
   return (
     <>
@@ -67,115 +57,14 @@ export function MarketsSidebar({
               <MarketCard
                 key={market.id}
                 market={market}
-                onClick={() => setSelectedMarket(market)}
+                onClick={() => openOrderModal(market)}
               />
             ))
           )}
         </div>
       </div>
 
-      {/* Market Detail Modal */}
-      <Dialog open={!!selectedMarket} onOpenChange={() => setSelectedMarket(null)}>
-        <DialogContent className="sm:max-w-lg">
-          {selectedMarket && (
-            <>
-              <DialogHeader>
-                <DialogTitle className="flex items-start gap-3">
-                  {selectedMarket.image && (
-                    <img
-                      src={selectedMarket.image}
-                      alt=""
-                      className="w-14 h-14 rounded-lg object-cover shrink-0 border border-border/30"
-                    />
-                  )}
-                  <span className="leading-snug">
-                    {selectedMarket.question || selectedMarket.title}
-                  </span>
-                </DialogTitle>
-              </DialogHeader>
-
-              <div className="space-y-4 mt-4">
-                {/* Volume */}
-                {selectedMarket.volume && (
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-muted-foreground">Volume</span>
-                    <span className="font-mono font-bold">
-                      ${parseFloat(selectedMarket.volume).toLocaleString()}
-                    </span>
-                  </div>
-                )}
-
-                {/* Outcomes */}
-                {selectedMarket.markets && selectedMarket.markets.length > 0 && (
-                  <div className="space-y-2">
-                    <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
-                      Outcomes
-                    </span>
-                    <div className="space-y-2">
-                      {selectedMarket.markets.map((outcome, i) => (
-                        <div
-                          key={i}
-                          className="flex items-center justify-between p-3 rounded-lg bg-muted/30 border border-border/30"
-                        >
-                          <span className="text-sm">{outcome.outcome}</span>
-                          <div className="flex items-center gap-3">
-                            <span
-                              className={cn(
-                                "text-lg font-mono font-bold",
-                                outcome.price >= 0.7
-                                  ? "text-chart-4"
-                                  : outcome.price <= 0.3
-                                  ? "text-destructive"
-                                  : "text-foreground"
-                              )}
-                            >
-                              {(outcome.price * 100).toFixed(0)}¢
-                            </span>
-                            {outcome.volume && (
-                              <span className="text-[10px] font-mono text-muted-foreground">
-                                ${parseFloat(outcome.volume).toLocaleString()}
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Sparkline */}
-                {selectedMarket.sparkline && selectedMarket.sparkline.length > 1 && (
-                  <div className="space-y-2">
-                    <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
-                      Price History
-                    </span>
-                    <div className="h-16 flex items-end gap-0.5 p-3 rounded-lg bg-muted/30 border border-border/30">
-                      {selectedMarket.sparkline.map((v, i) => (
-                        <div
-                          key={i}
-                          className="flex-1 bg-primary/50 rounded-sm"
-                          style={{ height: `${Math.max(v * 100, 4)}%` }}
-                        />
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Link */}
-                <a
-                  href={`https://polymarket.com/event/${selectedMarket.slug}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center justify-center gap-2 w-full py-3 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors font-medium"
-                >
-                  View on Polymarket
-                  <ExternalLink className="h-4 w-4" />
-                </a>
-              </div>
-            </>
-          )}
-        </DialogContent>
-      </Dialog>
+      <MarketOrderModal />
     </>
   );
 }
