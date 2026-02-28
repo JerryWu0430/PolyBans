@@ -29,12 +29,34 @@ final class TTSPlayer: NSObject, AVSpeechSynthesizerDelegate {
             try session.setCategory(
                 .playAndRecord,
                 mode: .voiceChat,
-                options: [.allowBluetoothA2DP, .defaultToSpeaker]
+                options: [.allowBluetoothHFP, .allowBluetoothA2DP]
             )
             try session.setActive(true)
+            routeToBluetoothIfAvailable(session)
+            logCurrentAudioRoute(session)
         } catch {
             print("[TTSPlayer] Audio session setup failed: \(error)")
         }
+    }
+
+    private func routeToBluetoothIfAvailable(_ session: AVAudioSession) {
+        guard let inputs = session.availableInputs else { return }
+        guard let bluetoothInput = inputs.first(where: {
+            $0.portType == .bluetoothHFP || $0.portType == .bluetoothLE
+        }) else { return }
+
+        do {
+            try session.setPreferredInput(bluetoothInput)
+        } catch {
+            print("[TTSPlayer] Failed to set Bluetooth preferred input: \(error)")
+        }
+    }
+
+    private func logCurrentAudioRoute(_ session: AVAudioSession) {
+        let outputs = session.currentRoute.outputs
+            .map { "\($0.portType.rawValue)(\($0.portName))" }
+            .joined(separator: ", ")
+        print("[TTSPlayer] Current audio outputs: \(outputs)")
     }
 
     private func playNext() {

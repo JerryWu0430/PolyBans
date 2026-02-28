@@ -87,6 +87,26 @@ export interface FrameData {
   height: number;
 }
 
+// --- Trade Confirmation Types ---
+
+export type TradeConfirmationState =
+  | "idle"
+  | "market_announced"
+  | "awaiting_confirmation"
+  | "executing"
+  | "done"
+  | "cancelled";
+
+export interface MockTradeResult {
+  orderId: string;
+  market: string;
+  outcome: string;
+  price: number;
+  shares: number;
+  totalCost: number;
+  executedAt: number;
+}
+
 export type RelayMessage =
   | { type: "transcript"; id: string; text: string; timestamp: number; source: string; confidence?: number; language?: string }
   | { type: "frame"; id: string; timestamp: number; base64: string; width: number; height: number }

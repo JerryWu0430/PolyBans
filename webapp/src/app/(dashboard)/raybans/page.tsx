@@ -8,12 +8,14 @@ import { useRelayStream } from "@/lib/hooks/useRelayStream";
 import { useFrameStream } from "@/lib/hooks/useFrameStream";
 import { useVisionSummary } from "@/lib/hooks/useVisionSummary";
 import { startMockStream } from "@/lib/mockStream";
+import { useTradeConfirmation } from "@/lib/hooks/useTradeConfirmation";
 import { VideoFeed } from "@/components/raybans/VideoFeed";
 import { TranscriptOverlay } from "@/components/raybans/TranscriptOverlay";
 import { VisionSummaryOverlay } from "@/components/raybans/VisionSummaryOverlay";
 import { MarketsSidebar } from "@/components/raybans/MarketsSidebar";
 import { VideoControlBar } from "@/components/raybans/VideoControlBar";
 import { MarketOrderModal } from "@/components/raybans/MarketOrderModal";
+import { TradeConfirmationBanner } from "@/components/raybans/TradeConfirmationBanner";
 import { Glasses, Clock, Zap, Volume2 } from "lucide-react";
 import { ModeToggle } from "@/components/layout/ModeToggle";
 import type { TranscriptChunk } from "@/lib/types/stream";
@@ -36,6 +38,7 @@ export default function RayBansPage() {
   const {
     buffering,
     analysis,
+    markets,
     error: pipelineError,
     isProcessing,
     flushCount,
@@ -56,6 +59,8 @@ export default function RayBansPage() {
     connect: connectFrames,
     disconnect: disconnectFrames,
   } = useFrameStream();
+
+  const tradeConfirmation = useTradeConfirmation({ sendTts });
 
   const [isStreaming, setIsStreaming] = useState(false);
   const [useMockStream, setUseMockStream] = useState(true);
@@ -98,6 +103,14 @@ export default function RayBansPage() {
     }
   }, [analysis, setAnalysis]);
 
+  // Trigger trade confirmation when new markets arrive
+  useEffect(() => {
+    if (markets.length > 0) {
+      tradeConfirmation.handleNewMarkets(markets);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [markets]);
+
   // Track previous transcript to extract only new words each 5s
   const lastTranscriptRef = useRef("");
 
@@ -116,7 +129,10 @@ export default function RayBansPage() {
 
       if (delta) {
         appendTranscript({ text: delta, timestamp: latest.timestamp, speaker: latest.source });
-        sendTranscript(delta); // only count new words toward the 600-char buffer
+        const consumed = tradeConfirmation.interceptTranscript(delta);
+        if (!consumed) {
+          sendTranscript(delta); // only count new words toward the 600-char buffer
+        }
       }
     }
   }, [useMockStream, relayTranscripts, appendTranscript, sendTranscript]);
@@ -284,27 +300,39 @@ export default function RayBansPage() {
           </div>
 
           {/* Center: Video Feed with Overlay - 9:16 portrait */}
-          <div className="relative h-full aspect-[9/16] shrink-0">
-            <VideoFeed
-              frameUrl={!useMockStream ? frameUrl ?? undefined : undefined}
-              isConnected={isLiveConnected}
-              isMock={useMockStream}
-              className="absolute inset-0 rounded-none border-0"
-            />
-            <TranscriptOverlay
-              chunks={transcript}
-              bufferPercent={bufferPercent}
-              isStreaming={isStreaming}
-            />
-            {/* Vision Summary */}
-            <VisionSummaryOverlay
-              description={visionDescription}
-              isProcessing={visionProcessing}
-              error={visionError}
-              lastUpdated={visionLastUpdated}
-              isMock={useMockStream}
-              isStreaming={isStreaming}
-            />
+          <div className="relative h-full aspect-[9/16] shrink-0 flex flex-col">
+            <div className="relative flex-1">
+              <VideoFeed
+                frameUrl={!useMockStream ? frameUrl ?? undefined : undefined}
+                isConnected={isLiveConnected}
+                isMock={useMockStream}
+                className="absolute inset-0 rounded-none border-0"
+              />
+              <TranscriptOverlay
+                chunks={transcript}
+                bufferPercent={bufferPercent}
+                isStreaming={isStreaming}
+              />
+              <VisionSummaryOverlay
+                description={visionDescription}
+                isProcessing={visionProcessing}
+                error={visionError}
+                lastUpdated={visionLastUpdated}
+                isMock={useMockStream}
+                isStreaming={isStreaming}
+              />
+            </div>
+            {/* Trade Confirmation Banner */}
+            {tradeConfirmation.confirmationState !== "idle" && (
+              <TradeConfirmationBanner
+                state={tradeConfirmation.confirmationState}
+                market={tradeConfirmation.pendingMarket}
+                subMarket={tradeConfirmation.pendingSubMarket}
+                timeoutProgress={tradeConfirmation.timeoutProgress}
+                lastTradeResult={tradeConfirmation.lastTradeResult}
+                onCancel={tradeConfirmation.manualCancel}
+              />
+            )}
           </div>
 
           {/* Right: Markets Sidebar */}
