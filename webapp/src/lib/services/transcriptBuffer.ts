@@ -34,8 +34,7 @@ export class TranscriptBuffer {
    */
   flush(): string {
     const text = this._buf;
-    this._buf =
-      text.length > CONTEXT_OVERLAP ? text.slice(-CONTEXT_OVERLAP) : "";
+    this._buf = "";
     return text;
   }
 
