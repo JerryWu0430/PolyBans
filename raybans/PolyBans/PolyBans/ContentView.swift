@@ -16,6 +16,22 @@ struct ContentView: View {
         NavigationView {
             VStack(spacing: 24) {
 
+                // MARK: Camera Preview
+                if let frame = vm.latestFrame {
+                    Image(uiImage: frame)
+                        .resizable()
+                        .scaledToFit()
+                        .frame(maxHeight: 200)
+                        .clipShape(RoundedRectangle(cornerRadius: 8))
+                }
+
+                // MARK: Glasses
+                NavigationLink {
+                    GlassesConnectionView(glasses: vm.glassesManager)
+                } label: {
+                    Label("Meta Glasses", systemImage: "eyeglasses")
+                }
+
                 // MARK: Status
                 HStack(spacing: 8) {
                     Circle()

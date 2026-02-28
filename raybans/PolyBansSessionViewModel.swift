@@ -20,6 +20,8 @@ final class PolyBansSessionViewModel: ObservableObject {
     private var relay: RelayClient?
     private let speechTranscriber = SpeechTranscriber()
     private let relayStatus = RelayConnectionStatus()
+    let glassesManager = GlassesCameraManager()
+    private var frameThrottler: FrameThrottler?
 
     /// Guards against piling up frame-push tasks when relay is slower than capture rate.
     private var framePushInFlight = false
@@ -80,9 +82,13 @@ final class PolyBansSessionViewModel: ObservableObject {
 
         // 3. Start speech
         speechTranscriber.start()
+
+        // 4. Start camera
+        startCamera()
     }
 
     func stopSession() {
+        stopCamera()
         speechTranscriber.stop()
         relay = nil
         isActive = false
@@ -92,6 +98,32 @@ final class PolyBansSessionViewModel: ObservableObject {
         userTranscript = ""
         latestFrame = nil
         errorMessage = nil
+    }
+
+    // MARK: - Camera Lifecycle
+
+    private func startCamera() {
+        let throttler = FrameThrottler(interval: 1.0)
+        self.frameThrottler = throttler
+
+        throttler.onThrottledFrame = { [weak self] image in
+            Task { @MainActor in
+                self?.handleFrame(image)
+            }
+        }
+
+        glassesManager.onFrameCaptured = { [weak throttler] image in
+            throttler?.submit(image)
+        }
+
+        glassesManager.start()
+    }
+
+    private func stopCamera() {
+        glassesManager.stop()
+        glassesManager.onFrameCaptured = nil
+        frameThrottler?.onThrottledFrame = nil
+        frameThrottler = nil
     }
 
     // MARK: - Camera Integration

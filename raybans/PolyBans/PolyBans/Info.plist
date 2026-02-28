@@ -6,6 +6,10 @@
 	<array>
 		<string>remote-notification</string>
 	</array>
+	<key>NSCameraUsageDescription</key>
+	<string>PolyBans uses the camera to capture video frames for analysis.</string>
+	<key>NSBluetoothAlwaysUsageDescription</key>
+	<string>PolyBans connects to Meta smart glasses via Bluetooth.</string>
 	<key>NSSpeechRecognitionUsageDescription</key>
 	<string>PolyBans transcribes live audio to identify Polymarket betting opportunities.</string>
 	<key>NSMicrophoneUsageDescription</key>

@@ -11,6 +11,14 @@
 		8D7D240F2F534CC100E8C995 /* RelayClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8D7D240C2F534CC100E8C995 /* RelayClient.swift */; };
 		8D7D24112F534CD600E8C995 /* PolyBansSessionViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8D7D24102F534CD600E8C995 /* PolyBansSessionViewModel.swift */; };
 		8D7D24132F534D0500E8C995 /* SpeechTranscriber.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8D7D24122F534D0500E8C995 /* SpeechTranscriber.swift */; };
+		AA000001AAAA000100000001 /* CameraSource.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA000001AAAA000100000005 /* CameraSource.swift */; };
+		AA000001AAAA000100000002 /* FrameThrottler.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA000001AAAA000100000006 /* FrameThrottler.swift */; };
+		AA000001AAAA000100000003 /* GlassesCameraManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA000001AAAA000100000007 /* GlassesCameraManager.swift */; };
+		AA000001AAAA000100000004 /* GlassesConnectionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA000001AAAA000100000008 /* GlassesConnectionView.swift */; };
+		AA000001AAAA00010000000B /* MWDATCamera.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = AA000001AAAA000100000009 /* MWDATCamera.xcframework */; };
+		AA000001AAAA00010000000C /* MWDATCore.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = AA000001AAAA00010000000A /* MWDATCore.xcframework */; };
+		AA000001AAAA000100000011 /* MWDATCamera.xcframework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = AA000001AAAA000100000009 /* MWDATCamera.xcframework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		AA000001AAAA000100000012 /* MWDATCore.xcframework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = AA000001AAAA00010000000A /* MWDATCore.xcframework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -38,6 +46,12 @@
 		8D7D240D2F534CC100E8C995 /* RelayModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RelayModels.swift; sourceTree = "<group>"; };
 		8D7D24102F534CD600E8C995 /* PolyBansSessionViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PolyBansSessionViewModel.swift; sourceTree = "<group>"; };
 		8D7D24122F534D0500E8C995 /* SpeechTranscriber.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpeechTranscriber.swift; sourceTree = "<group>"; };
+		AA000001AAAA000100000005 /* CameraSource.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraSource.swift; sourceTree = "<group>"; };
+		AA000001AAAA000100000006 /* FrameThrottler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FrameThrottler.swift; sourceTree = "<group>"; };
+		AA000001AAAA000100000007 /* GlassesCameraManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlassesCameraManager.swift; sourceTree = "<group>"; };
+		AA000001AAAA000100000008 /* GlassesConnectionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlassesConnectionView.swift; sourceTree = "<group>"; };
+		AA000001AAAA000100000009 /* MWDATCamera.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; name = MWDATCamera.xcframework; path = Frameworks/MWDATCamera.xcframework; sourceTree = "<group>"; };
+		AA000001AAAA00010000000A /* MWDATCore.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; name = MWDATCore.xcframework; path = Frameworks/MWDATCore.xcframework; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -76,6 +90,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				AA000001AAAA00010000000B /* MWDATCamera.xcframework in Frameworks */,
+				AA000001AAAA00010000000C /* MWDATCore.xcframework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -103,6 +119,9 @@
 				8D7D24102F534CD600E8C995 /* PolyBansSessionViewModel.swift */,
 				8D7D240C2F534CC100E8C995 /* RelayClient.swift */,
 				8D7D240D2F534CC100E8C995 /* RelayModels.swift */,
+				AA000001AAAA00010000000D /* Vision */,
+				AA000001AAAA00010000000E /* Views */,
+				AA000001AAAA00010000000F /* Frameworks */,
 				8D7D23DF2F53280600E8C995 /* PolyBans */,
 				8D7D23F12F53280700E8C995 /* PolyBansTests */,
 				8D7D23FB2F53280700E8C995 /* PolyBansUITests */,
@@ -120,9 +139,51 @@
 			name = Products;
 			sourceTree = "<group>";
 		};
+		AA000001AAAA00010000000D /* Vision */ = {
+			isa = PBXGroup;
+			children = (
+				AA000001AAAA000100000005 /* CameraSource.swift */,
+				AA000001AAAA000100000006 /* FrameThrottler.swift */,
+				AA000001AAAA000100000007 /* GlassesCameraManager.swift */,
+			);
+			path = Vision;
+			sourceTree = "<group>";
+		};
+		AA000001AAAA00010000000E /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				AA000001AAAA000100000008 /* GlassesConnectionView.swift */,
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
+		AA000001AAAA00010000000F /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				AA000001AAAA000100000009 /* MWDATCamera.xcframework */,
+				AA000001AAAA00010000000A /* MWDATCore.xcframework */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
+/* Begin PBXCopyFilesBuildPhase section */
+		AA000001AAAA000100000010 /* Embed Frameworks */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 10;
+			files = (
+				AA000001AAAA000100000011 /* MWDATCamera.xcframework in Embed Frameworks */,
+				AA000001AAAA000100000012 /* MWDATCore.xcframework in Embed Frameworks */,
+			);
+			name = "Embed Frameworks";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
 		8D7D23DC2F53280600E8C995 /* PolyBans */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 8D7D24012F53280700E8C995 /* Build configuration list for PBXNativeTarget "PolyBans" */;
@@ -130,6 +191,7 @@
 				8D7D23D92F53280600E8C995 /* Sources */,
 				8D7D23DA2F53280600E8C995 /* Frameworks */,
 				8D7D23DB2F53280600E8C995 /* Resources */,
+				AA000001AAAA000100000010 /* Embed Frameworks */,
 			);
 			buildRules = (
 			);
@@ -268,6 +330,10 @@
 				8D7D240F2F534CC100E8C995 /* RelayClient.swift in Sources */,
 				8D7D24132F534D0500E8C995 /* SpeechTranscriber.swift in Sources */,
 				8D7D24112F534CD600E8C995 /* PolyBansSessionViewModel.swift in Sources */,
+				AA000001AAAA000100000001 /* CameraSource.swift in Sources */,
+				AA000001AAAA000100000002 /* FrameThrottler.swift in Sources */,
+				AA000001AAAA000100000003 /* GlassesCameraManager.swift in Sources */,
+				AA000001AAAA000100000004 /* GlassesConnectionView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -311,6 +377,10 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = CM77Z5GPZW;
 				ENABLE_PREVIEWS = YES;
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(PROJECT_DIR)/Frameworks",
+				);
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = PolyBans/Info.plist;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
@@ -345,6 +415,10 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = CM77Z5GPZW;
 				ENABLE_PREVIEWS = YES;
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(PROJECT_DIR)/Frameworks",
+				);
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = PolyBans/Info.plist;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
