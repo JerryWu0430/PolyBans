@@ -14,15 +14,27 @@ export interface PolymarketAnalysis {
   reason: string;
 }
 
+// Sub-market within a multi-outcome event
+export interface SubMarket {
+  question: string;
+  groupItemTitle: string;  // Short label (e.g., "Thom Tillis")
+  yesPrice: number;
+  noPrice: number;
+  volume: string;
+  clobTokenId: string;     // Yes token for price history
+  sparkline?: number[];
+}
+
 export interface PolymarketMarket {
   id: string;
   slug: string;
   title: string;
   question: string;
   volume: string;
-  markets: OutcomeData[];
+  subMarkets: SubMarket[];  // Structured multi-outcome markets
+  markets: OutcomeData[];   // Keep for backward compat
   sparkline: number[];
-  image: string;
+  image: string | null;
 }
 
 export interface OutcomeData {

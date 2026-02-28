@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { cn } from "@/lib/utils";
 import {
   ExternalLink,
@@ -15,16 +16,20 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { useArbitrageStore } from "@/lib/stores/arbitrageStore";
+import type { SubMarket } from "@/lib/types/polymarket-stream";
 
 export function MarketOrderModal() {
   const { selectedMarketForOrder, isOrderModalOpen, closeOrderModal, latestAnalysis } =
     useArbitrageStore();
+  const [hoveredSubMarket, setHoveredSubMarket] = useState<SubMarket | null>(null);
 
   const market = selectedMarketForOrder;
+  const hasSubMarkets = market?.subMarkets && market.subMarkets.length > 1;
+  const displaySparkline = hoveredSubMarket?.sparkline || market?.sparkline || [];
 
   return (
     <Dialog open={isOrderModalOpen} onOpenChange={closeOrderModal}>
-      <DialogContent className="sm:max-w-lg max-h-[85vh] overflow-y-auto overflow-x-hidden">
+      <DialogContent className="sm:max-w-2xl max-h-[85vh] overflow-y-auto overflow-x-hidden">
         {market && (
           <>
             <DialogHeader>
@@ -73,8 +78,59 @@ export function MarketOrderModal() {
                 </div>
               </div>
 
-              {/* Outcomes with Prices */}
-              {market.markets && market.markets.length > 0 && (
+              {/* Multi-outcome table layout */}
+              {hasSubMarkets && (
+                <div className="space-y-2">
+                  <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
+                    Market Outcomes
+                  </span>
+                  <div className="rounded-lg border border-border/30 overflow-hidden">
+                    <table className="w-full text-sm">
+                      <thead className="bg-muted/40">
+                        <tr className="text-xs text-muted-foreground uppercase">
+                          <th className="text-left p-2 font-medium">Outcome</th>
+                          <th className="text-right p-2 font-medium">Prob</th>
+                          <th className="text-right p-2 font-medium">Yes</th>
+                          <th className="text-right p-2 font-medium">No</th>
+                          <th className="text-right p-2 font-medium">Volume</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {market.subMarkets.map((sm, i) => (
+                          <tr
+                            key={i}
+                            className="border-t border-border/20 hover:bg-muted/20 cursor-pointer transition-colors"
+                            onMouseEnter={() => setHoveredSubMarket(sm)}
+                            onMouseLeave={() => setHoveredSubMarket(null)}
+                          >
+                            <td className="p-2 font-medium truncate max-w-[180px]">
+                              {sm.groupItemTitle}
+                            </td>
+                            <td className={cn(
+                              "p-2 text-right font-mono font-bold tabular-nums",
+                              sm.yesPrice >= 0.7 ? "text-chart-4" : sm.yesPrice <= 0.3 ? "text-destructive" : ""
+                            )}>
+                              {(sm.yesPrice * 100).toFixed(0)}%
+                            </td>
+                            <td className="p-2 text-right font-mono text-chart-4">
+                              {(sm.yesPrice * 100).toFixed(1)}¢
+                            </td>
+                            <td className="p-2 text-right font-mono text-destructive">
+                              {(sm.noPrice * 100).toFixed(1)}¢
+                            </td>
+                            <td className="p-2 text-right font-mono text-muted-foreground text-xs">
+                              ${parseFloat(sm.volume).toLocaleString()}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+
+              {/* Single-outcome fallback (Yes/No markets) */}
+              {!hasSubMarkets && market.markets && market.markets.length > 0 && (
                 <div className="space-y-2">
                   <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
                     Current Prices
@@ -124,13 +180,20 @@ export function MarketOrderModal() {
               )}
 
               {/* Sparkline Chart (Larger) */}
-              {market.sparkline && market.sparkline.length > 1 && (
+              {displaySparkline.length > 1 && (
                 <div className="space-y-2">
-                  <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
-                    Price History
-                  </span>
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
+                      Price History
+                    </span>
+                    {hoveredSubMarket && (
+                      <span className="text-xs text-muted-foreground">
+                        {hoveredSubMarket.groupItemTitle}
+                      </span>
+                    )}
+                  </div>
                   <div className="h-24 flex items-end gap-0.5 p-4 rounded-lg bg-muted/30 border border-border/30 w-full min-w-0">
-                    {market.sparkline.slice(-30).map((v, i) => (
+                    {displaySparkline.slice(-30).map((v, i) => (
                       <div
                         key={i}
                         className="flex-1 min-w-0 bg-primary/60 hover:bg-primary transition-colors rounded-sm"
