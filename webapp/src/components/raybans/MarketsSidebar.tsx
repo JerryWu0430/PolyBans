@@ -4,7 +4,6 @@ import { cn } from "@/lib/utils";
 import { TrendingUp, Radio } from "lucide-react";
 import type { PolymarketMarket } from "@/lib/types/polymarket-stream";
 import { useArbitrageStore } from "@/lib/stores/arbitrageStore";
-import { MarketOrderModal } from "./MarketOrderModal";
 
 interface MarketsSidebarProps {
   markets: PolymarketMarket[];
@@ -64,7 +63,6 @@ export function MarketsSidebar({
         </div>
       </div>
 
-      <MarketOrderModal />
     </>
   );
 }

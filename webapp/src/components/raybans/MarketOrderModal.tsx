@@ -24,7 +24,7 @@ export function MarketOrderModal() {
 
   return (
     <Dialog open={isOrderModalOpen} onOpenChange={closeOrderModal}>
-      <DialogContent className="sm:max-w-xl">
+      <DialogContent className="sm:max-w-lg max-h-[85vh] overflow-y-auto overflow-x-hidden">
         {market && (
           <>
             <DialogHeader>
@@ -129,11 +129,11 @@ export function MarketOrderModal() {
                   <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
                     Price History
                   </span>
-                  <div className="h-24 flex items-end gap-0.5 p-4 rounded-lg bg-muted/30 border border-border/30">
-                    {market.sparkline.map((v, i) => (
+                  <div className="h-24 flex items-end gap-0.5 p-4 rounded-lg bg-muted/30 border border-border/30 w-full min-w-0">
+                    {market.sparkline.slice(-30).map((v, i) => (
                       <div
                         key={i}
-                        className="flex-1 bg-primary/60 hover:bg-primary transition-colors rounded-sm"
+                        className="flex-1 min-w-0 bg-primary/60 hover:bg-primary transition-colors rounded-sm"
                         style={{ height: `${Math.max(v * 100, 4)}%` }}
                       />
                     ))}

@@ -10,6 +10,7 @@ import { VideoFeed } from "@/components/raybans/VideoFeed";
 import { TranscriptOverlay } from "@/components/raybans/TranscriptOverlay";
 import { MarketsSidebar } from "@/components/raybans/MarketsSidebar";
 import { VideoControlBar } from "@/components/raybans/VideoControlBar";
+import { MarketOrderModal } from "@/components/raybans/MarketOrderModal";
 import { Glasses, Clock, Zap } from "lucide-react";
 import type { TranscriptChunk } from "@/lib/types/stream";
 
@@ -139,6 +140,7 @@ export default function RayBansPage() {
     : 0;
 
   return (
+    <>
     <div className="h-full flex flex-col bg-background">
       {/* Top Status Bar */}
       <div className="flex items-center justify-between px-4 py-2 border-b border-border/50 bg-card/50">
@@ -218,5 +220,9 @@ export default function RayBansPage() {
         />
       </div>
     </div>
+
+    {/* Modal rendered outside page container for proper centering */}
+    <MarketOrderModal />
+    </>
   );
 }
