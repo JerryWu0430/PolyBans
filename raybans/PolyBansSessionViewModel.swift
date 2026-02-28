@@ -26,6 +26,10 @@ final class PolyBansSessionViewModel: ObservableObject {
     /// Guards against piling up frame-push tasks when relay is slower than capture rate.
     private var framePushInFlight = false
 
+    /// Timer that periodically flushes partial transcript to the relay (~5s)
+    private var flushTimer: Timer?
+    private var lastFlushedTranscript = ""
+
     init() {
         // Forward relay connection status
         relayStatus.$isConnected
@@ -40,14 +44,14 @@ final class PolyBansSessionViewModel: ObservableObject {
 
     // MARK: - Session Lifecycle
 
-    func startSession(host: String = "localhost", port: Int = 8420, urlSessionConfiguration: URLSessionConfiguration? = nil) {
+    func startSession(host: String = "localhost", port: Int = 8420, urlSessionConfiguration: URLSessionConfiguration? = nil) async {
         guard !isActive else { return }
 
         let client: RelayClient
         if let config = urlSessionConfiguration {
-            client = RelayClient(host: host, port: port, configuration: config, status: relayStatus)
+            client = await RelayClient(host: host, port: port, configuration: config, status: relayStatus)
         } else {
-            client = RelayClient(host: host, port: port, status: relayStatus)
+            client = await RelayClient(host: host, port: port, status: relayStatus)
         }
         self.relay = client
         isActive = true
@@ -62,9 +66,10 @@ final class PolyBansSessionViewModel: ObservableObject {
             }
         }
 
-        // 2. Wire speech transcriber
+        // 2. Wire final transcript callback (fires on Apple STT timeout/stop)
         speechTranscriber.onTranscript = { [weak self] text, confidence in
             guard let self, let relay = self.relay else { return }
+            self.lastFlushedTranscript = text
             Task {
                 do {
                     _ = try await relay.pushTranscript(
@@ -80,15 +85,42 @@ final class PolyBansSessionViewModel: ObservableObject {
             }
         }
 
-        // 3. Start speech
+        // 3. Periodic flush — send partial transcript every 5s during live speech
+        //    Apple's isFinal rarely fires during continuous speech, so this keeps
+        //    data flowing to the relay without waiting for a full stop.
+        flushTimer = Timer.scheduledTimer(withTimeInterval: 5.0, repeats: true) { [weak self] _ in
+            guard let self else { return }
+            Task { @MainActor in
+                let current = self.userTranscript
+                guard !current.isEmpty, current != self.lastFlushedTranscript else { return }
+                self.lastFlushedTranscript = current
+                guard let relay = self.relay else { return }
+                do {
+                    _ = try await relay.pushTranscript(
+                        text: current,
+                        source: "raybans-mic-partial",
+                        confidence: nil,
+                        language: "en"
+                    )
+                    self.transcriptsSent += 1
+                } catch {
+                    print("[PolyBans] Partial transcript push failed: \(error)")
+                }
+            }
+        }
+
+        // 4. Start speech
         speechTranscriber.start()
 
-        // 4. Start camera
+        // 5. Start camera
         startCamera()
     }
 
     func stopSession() {
         stopCamera()
+        flushTimer?.invalidate()
+        flushTimer = nil
+        lastFlushedTranscript = ""
         speechTranscriber.stop()
         relay = nil
         isActive = false
@@ -99,6 +131,7 @@ final class PolyBansSessionViewModel: ObservableObject {
         latestFrame = nil
         errorMessage = nil
     }
+
 
     // MARK: - Camera Lifecycle
 
