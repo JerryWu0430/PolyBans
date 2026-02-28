@@ -2,10 +2,6 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-	<key>UIBackgroundModes</key>
-	<array>
-		<string>remote-notification</string>
-	</array>
 	<key>CFBundleURLTypes</key>
 	<array>
 		<dict>
@@ -19,6 +15,28 @@
 			</array>
 		</dict>
 	</array>
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<key>NSAllowsLocalNetworking</key>
+		<true/>
+	</dict>
+	<key>NSBluetoothAlwaysUsageDescription</key>
+	<string>PolyBans connects to Meta smart glasses via Bluetooth.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>PolyBans uses the camera to capture video frames for analysis.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>PolyBans needs the microphone to capture live audio for transcription.</string>
+	<key>NSSpeechRecognitionUsageDescription</key>
+	<string>PolyBans transcribes live audio to identify Polymarket betting opportunities.</string>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>bluetooth-peripheral</string>
+		<string>external-accessory</string>
+	</array>
+	<key>UISupportedExternalAccessoryProtocols</key>
+	<array>
+		<string>com.meta.ar.wearable</string>
+	</array>
 	<key>MWDAT</key>
 	<dict>
 		<key>AppLinkURLScheme</key>
@@ -30,13 +48,5 @@
 		<key>TeamID</key>
 		<string>$(DEVELOPMENT_TEAM)</string>
 	</dict>
-	<key>NSCameraUsageDescription</key>
-	<string>PolyBans uses the camera to capture video frames for analysis.</string>
-	<key>NSBluetoothAlwaysUsageDescription</key>
-	<string>PolyBans connects to Meta smart glasses via Bluetooth.</string>
-	<key>NSSpeechRecognitionUsageDescription</key>
-	<string>PolyBans transcribes live audio to identify Polymarket betting opportunities.</string>
-	<key>NSMicrophoneUsageDescription</key>
-	<string>PolyBans needs the microphone to capture live audio for transcription.</string>
 </dict>
 </plist>
