@@ -3,6 +3,7 @@ import multer, { MulterError } from "multer";
 import { v4 as uuidv4 } from "uuid";
 import { state } from "../state";
 import { broadcastFrame, broadcastTranscript } from "../ws/handler";
+import { forwardTranscript } from "../forward/polymarket";
 import { FrameEntry, WsFrameMessage, WsTranscriptMessage, TranscriptSegment } from "../types";
 
 const router = Router();
@@ -68,6 +69,7 @@ router.post("/transcript", (req, res) => {
     ...segment,
   };
   broadcastTranscript(wsMsg);
+  forwardTranscript(text);
 
   res.status(200).json(segment);
 });
