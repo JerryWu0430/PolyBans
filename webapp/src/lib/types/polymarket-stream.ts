@@ -28,7 +28,8 @@ export interface PolymarketMarket {
 export interface OutcomeData {
   outcome: string;
   price: number;
-  volume: string;
+  volume?: string;
+  clobTokenId?: string;
 }
 
 export interface MarketsPayload {

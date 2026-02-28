@@ -7,10 +7,21 @@
 const GAMMA_API = "https://gamma-api.polymarket.com";
 const CLOB_API = "https://clob.polymarket.com";
 
+// Raw API response structure (from Gamma API)
+interface GammaMarket {
+  outcomes?: string; // JSON array string like "[\"Yes\", \"No\"]"
+  outcomePrices?: string; // JSON array string like "[\"0.45\", \"0.55\"]"
+  clobTokenIds?: string; // JSON array string of token IDs
+  volume?: string;
+  question?: string;
+}
+
+// Transformed structure for UI
 export interface MarketOutcome {
   outcome: string;
-  outcomePrices: string;
-  clobTokenIds?: string;
+  price: number;
+  volume?: string;
+  clobTokenId?: string;
 }
 
 export interface SearchMarketResult {
@@ -22,6 +33,53 @@ export interface SearchMarketResult {
   markets: MarketOutcome[];
   sparkline: number[];
   image: string | null;
+}
+
+/**
+ * Parse JSON array string safely
+ */
+function parseJsonArray(str: string | undefined): string[] {
+  if (!str) return [];
+  try {
+    const parsed = JSON.parse(str);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * Transform raw API market data to UI-friendly format.
+ * Each GammaMarket has parallel arrays: outcomes=["Yes","No"], outcomePrices=["0.45","0.55"]
+ */
+function transformMarkets(rawMarkets: GammaMarket[] | undefined): MarketOutcome[] {
+  if (!rawMarkets || !Array.isArray(rawMarkets)) return [];
+
+  const results: MarketOutcome[] = [];
+
+  for (const market of rawMarkets.slice(0, 4)) {
+    const outcomes = parseJsonArray(market.outcomes);
+    const prices = parseJsonArray(market.outcomePrices);
+    const tokenIds = parseJsonArray(market.clobTokenIds);
+
+    // Pair outcomes with their prices
+    for (let i = 0; i < outcomes.length && i < 4; i++) {
+      const outcome = outcomes[i] || "Unknown";
+      const price = parseFloat(prices[i]) || 0;
+      const clobTokenId = tokenIds[i];
+
+      console.log(`[polymarket] Outcome: "${outcome}" price=${price}`);
+
+      results.push({
+        outcome,
+        price,
+        volume: market.volume,
+        clobTokenId,
+      });
+    }
+  }
+
+  return results;
 }
 
 /**
@@ -68,17 +126,14 @@ export async function searchActiveEvents(
     const results: SearchMarketResult[] = [];
 
     for (const event of topEvents) {
+      // Transform raw API markets to UI format
+      const markets = transformMarkets(event.markets);
+
+      // Fetch sparkline from first outcome's token
       let sparkline: number[] = [];
-      try {
-        if (event.markets?.[0]?.clobTokenIds) {
-          const raw = event.markets[0].clobTokenIds;
-          const tokens = typeof raw === "string" ? JSON.parse(raw) : raw;
-          if (Array.isArray(tokens) && tokens.length > 0) {
-            sparkline = await getSparkline(tokens[0]);
-          }
-        }
-      } catch {
-        // Sparkline failure is non-fatal
+      const firstTokenId = markets[0]?.clobTokenId;
+      if (firstTokenId) {
+        sparkline = await getSparkline(firstTokenId);
       }
 
       results.push({
@@ -87,7 +142,7 @@ export async function searchActiveEvents(
         title: event.title,
         question: event.question || event.title,
         volume: event.volume,
-        markets: event.markets?.slice(0, 2) ?? [],
+        markets,
         sparkline,
         image: event.image ?? null,
       });
