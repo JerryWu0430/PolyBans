@@ -154,18 +154,6 @@ function MarketCard({
         </div>
       ) : null}
 
-      {/* Sparkline */}
-      {market.sparkline && market.sparkline.length > 1 && (
-        <div className="h-6 flex items-end gap-px">
-          {market.sparkline.slice(-20).map((v, i) => (
-            <div
-              key={i}
-              className="flex-1 bg-primary/30 group-hover:bg-primary/50 rounded-sm transition-colors"
-              style={{ height: `${Math.max(v * 100, 8)}%` }}
-            />
-          ))}
-        </div>
-      )}
     </button>
   );
 }

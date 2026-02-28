@@ -15,6 +15,7 @@ interface GammaMarket {
   volume?: string;
   question?: string;
   groupItemTitle?: string; // Short label for multi-outcome markets
+  slug?: string; // Market slug for embeds
 }
 
 // Transformed structure for UI
@@ -33,6 +34,7 @@ export interface SubMarket {
   noPrice: number;
   volume: string;
   clobTokenId: string;
+  slug: string; // For official embed iframe
   sparkline?: number[];
 }
 
@@ -89,24 +91,34 @@ function transformMarkets(rawMarkets: GammaMarket[] | undefined): MarketOutcome[
 
 /**
  * Transform raw markets to SubMarket[] for multi-outcome events.
+ * Filters out placeholder markets (null prices, 0 volume).
  */
 function transformToSubMarkets(rawMarkets: GammaMarket[] | undefined): SubMarket[] {
   if (!rawMarkets || !Array.isArray(rawMarkets)) return [];
 
-  return rawMarkets.slice(0, 10).map((m) => {
-    const prices = parseJsonArray(m.outcomePrices);
-    const tokens = parseJsonArray(m.clobTokenIds);
-    const label = m.groupItemTitle || m.question?.split(" ").slice(-2).join(" ") || "Market";
+  return rawMarkets
+    .filter((m) => {
+      // Filter out placeholders: null prices or 0 volume
+      const vol = parseFloat(m.volume || "0");
+      const hasPrices = m.outcomePrices && m.outcomePrices !== "null";
+      return hasPrices && vol > 0;
+    })
+    .slice(0, 10)
+    .map((m) => {
+      const prices = parseJsonArray(m.outcomePrices);
+      const tokens = parseJsonArray(m.clobTokenIds);
+      const label = m.groupItemTitle || m.question?.split(" ").slice(-2).join(" ") || "Market";
 
-    return {
-      question: m.question || "",
-      groupItemTitle: label,
-      yesPrice: parseFloat(prices[0]) || 0,
-      noPrice: parseFloat(prices[1]) || 0,
-      volume: m.volume || "0",
-      clobTokenId: tokens[0] || "",
-    };
-  });
+      return {
+        question: m.question || "",
+        groupItemTitle: label,
+        yesPrice: parseFloat(prices[0]) || 0,
+        noPrice: parseFloat(prices[1]) || 0,
+        volume: m.volume || "0",
+        clobTokenId: tokens[0] || "",
+        slug: m.slug || "",
+      };
+    });
 }
 
 /**
@@ -138,7 +150,7 @@ export async function searchActiveEvents(
   tag?: string | null
 ): Promise<SearchMarketResult[]> {
   try {
-    let url = `${GAMMA_API}/public-search?q=${encodeURIComponent(query)}&events_status=active&limit_per_type=20`;
+    let url = `${GAMMA_API}/public-search?q=${encodeURIComponent(query)}&events_status=active&limit_per_type=20&order=volume&ascending=false`;
     if (tag && tag.toLowerCase() !== "null") {
       url += `&events_tag=${encodeURIComponent(tag.toLowerCase())}`;
     }
@@ -161,10 +173,12 @@ export async function searchActiveEvents(
       const sparklinePromises = subMarkets.slice(0, 5).map(async (sm, i) => {
         if (sm.clobTokenId) {
           const sparkline = await getSparkline(sm.clobTokenId);
+          console.log(`[polymarket] Sparkline for ${sm.groupItemTitle}: ${sparkline.length} points`);
           subMarkets[i].sparkline = sparkline;
         }
       });
       await Promise.all(sparklinePromises);
+      console.log(`[polymarket] Event "${event.title}" has ${subMarkets.length} subMarkets`);
 
       // Event-level sparkline from first market
       const sparkline = subMarkets[0]?.sparkline || [];

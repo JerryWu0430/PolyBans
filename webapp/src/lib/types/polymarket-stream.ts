@@ -7,11 +7,21 @@ export type ConnectionState = "connecting" | "connected" | "disconnected" | "err
 
 // --- Polymarket Service Messages (port 3001) ---
 
+export interface StrategyAnalysis {
+  summary: string;
+  edge: string | null;
+  undervalued: string | null;
+  sentiment: "bullish" | "bearish" | "neutral" | "mixed";
+  confidence: "low" | "medium" | "high";
+  risk: string;
+}
+
 export interface PolymarketAnalysis {
   detected: boolean;
   queries: string[];
   tag: "politics" | "crypto" | "sports" | "business" | "science" | "pop-culture" | null;
   reason: string;
+  strategy?: StrategyAnalysis;
 }
 
 // Sub-market within a multi-outcome event
@@ -22,6 +32,7 @@ export interface SubMarket {
   noPrice: number;
   volume: string;
   clobTokenId: string;     // Yes token for price history
+  slug: string;            // For official Polymarket embed
   sparkline?: number[];
 }
 
