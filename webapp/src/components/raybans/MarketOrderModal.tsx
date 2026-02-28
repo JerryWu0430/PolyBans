@@ -55,63 +55,52 @@ export function MarketOrderModal() {
 
             {/* AI Strategy - Full width below title */}
             {strategy && (
-              <div className="p-4 rounded-xl bg-gradient-to-r from-primary/5 via-primary/10 to-primary/5 border border-primary/20">
+              <div className="p-4 rounded-xl bg-muted/30 border border-border/50">
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center gap-2">
-                    <Brain className="h-4 w-4 text-primary" />
-                    <span className="text-sm font-bold text-primary uppercase tracking-wider">
+                    <Brain className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-sm font-bold text-foreground uppercase tracking-wider">
                       AI Strategy
                     </span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className={cn(
-                      "px-2 py-1 text-xs font-bold uppercase rounded-full",
-                      strategy.sentiment === "bullish" && "bg-chart-4/20 text-chart-4",
-                      strategy.sentiment === "bearish" && "bg-destructive/20 text-destructive",
-                      strategy.sentiment === "neutral" && "bg-muted text-muted-foreground",
-                      strategy.sentiment === "mixed" && "bg-yellow-500/20 text-yellow-500"
-                    )}>
+                    <span className="px-2 py-1 text-xs font-bold uppercase rounded-full bg-muted text-muted-foreground">
                       {strategy.sentiment}
                     </span>
-                    <span className={cn(
-                      "px-2 py-1 text-xs font-mono rounded-full border",
-                      strategy.confidence === "high" && "border-chart-4 text-chart-4 bg-chart-4/10",
-                      strategy.confidence === "medium" && "border-yellow-500 text-yellow-500 bg-yellow-500/10",
-                      strategy.confidence === "low" && "border-muted-foreground text-muted-foreground"
-                    )}>
+                    <span className="px-2 py-1 text-xs font-mono rounded-full border border-border text-muted-foreground">
                       {strategy.confidence} confidence
                     </span>
                   </div>
                 </div>
 
-                <p className="text-sm text-foreground leading-relaxed mb-3">
+                <p className="text-sm text-foreground/90 leading-relaxed mb-3">
                   {strategy.summary}
                 </p>
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                   {strategy.edge && (
-                    <div className="p-3 rounded-lg bg-chart-4/10 border border-chart-4/30">
+                    <div className="p-3 rounded-lg bg-muted/50 border border-border/50">
                       <div className="flex items-center gap-1.5 mb-1">
-                        <Sparkles className="h-3 w-3 text-chart-4" />
-                        <p className="text-[10px] font-bold text-chart-4 uppercase">Edge</p>
+                        <Sparkles className="h-3 w-3 text-muted-foreground" />
+                        <p className="text-[10px] font-bold text-muted-foreground uppercase">Edge</p>
                       </div>
                       <p className="text-xs text-foreground/80">{strategy.edge}</p>
                     </div>
                   )}
                   {strategy.undervalued && (
-                    <div className="p-3 rounded-lg bg-primary/10 border border-primary/30">
+                    <div className="p-3 rounded-lg bg-muted/50 border border-border/50">
                       <div className="flex items-center gap-1.5 mb-1">
-                        <Target className="h-3 w-3 text-primary" />
-                        <p className="text-[10px] font-bold text-primary uppercase">Undervalued</p>
+                        <Target className="h-3 w-3 text-muted-foreground" />
+                        <p className="text-[10px] font-bold text-muted-foreground uppercase">Undervalued</p>
                       </div>
                       <p className="text-xs text-foreground/80">{strategy.undervalued}</p>
                     </div>
                   )}
                   {strategy.risk && (
-                    <div className="p-3 rounded-lg bg-destructive/10 border border-destructive/30">
+                    <div className="p-3 rounded-lg bg-muted/50 border border-border/50">
                       <div className="flex items-center gap-1.5 mb-1">
-                        <AlertTriangle className="h-3 w-3 text-destructive" />
-                        <p className="text-[10px] font-bold text-destructive uppercase">Risk</p>
+                        <AlertTriangle className="h-3 w-3 text-muted-foreground" />
+                        <p className="text-[10px] font-bold text-muted-foreground uppercase">Risk</p>
                       </div>
                       <p className="text-xs text-foreground/80">{strategy.risk}</p>
                     </div>
