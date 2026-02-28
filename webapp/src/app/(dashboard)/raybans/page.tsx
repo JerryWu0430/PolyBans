@@ -3,7 +3,7 @@
 import { useEffect, useCallback, useState } from "react";
 import { useStreamStore } from "@/lib/stores/streamStore";
 import { useArbitrageStore } from "@/lib/stores/arbitrageStore";
-import { usePolymarketStream } from "@/lib/hooks/usePolymarketStream";
+import { useAnalysisPipeline } from "@/lib/hooks/useAnalysisPipeline";
 import { useRelayStream } from "@/lib/hooks/useRelayStream";
 import { startMockStream } from "@/lib/mockStream";
 import { VideoFeed } from "@/components/raybans/VideoFeed";
@@ -16,34 +16,26 @@ import type { TranscriptChunk } from "@/lib/types/stream";
 export default function RayBansPage() {
   const {
     transcript,
-    currentAnalysis,
-    isConnected,
-    appendTranscript,
     setAnalysis,
     setConnected,
     setMode,
+    appendTranscript,
     reset,
   } = useStreamStore();
 
   const {
-    opportunities,
     clearOpportunities,
-    setStreamedMarkets,
-    setLatestAnalysis,
-    setBuffering,
     streamedMarkets,
   } = useArbitrageStore();
 
   const {
-    state: polymarketState,
-    analysis,
-    markets,
     buffering,
-    error: polymarketError,
-    connect: connectPolymarket,
-    disconnect: disconnectPolymarket,
-    sendTranscript: sendToPolymarket,
-  } = usePolymarketStream();
+    analysis,
+    error: pipelineError,
+    isProcessing,
+    sendTranscript,
+    reset: resetPipeline,
+  } = useAnalysisPipeline();
 
   const {
     state: relayState,
@@ -62,35 +54,24 @@ export default function RayBansPage() {
     return () => clearInterval(timer);
   }, []);
 
+  // Sync analysis to streamStore
   useEffect(() => {
-    if (analysis) {
-      setLatestAnalysis(analysis);
-      if (analysis.detected) {
-        setAnalysis({
-          confidence: 0.8,
-          sentiment: "neutral",
-          summary: analysis.reason,
-          suggestedQueries: analysis.queries,
-          entities: analysis.queries.map((q: string) => ({
-            name: q,
-            type: "other" as const,
-            relevance: 0.8,
-          })),
-        });
-      }
+    if (analysis?.detected) {
+      setAnalysis({
+        confidence: 0.8,
+        sentiment: "neutral",
+        summary: analysis.reason,
+        suggestedQueries: analysis.queries,
+        entities: analysis.queries.map((q: string) => ({
+          name: q,
+          type: "other" as const,
+          relevance: 0.8,
+        })),
+      });
     }
-  }, [analysis, setAnalysis, setLatestAnalysis]);
+  }, [analysis, setAnalysis]);
 
-  useEffect(() => {
-    if (markets && markets.length > 0) {
-      setStreamedMarkets(markets);
-    }
-  }, [markets, setStreamedMarkets]);
-
-  useEffect(() => {
-    setBuffering(buffering);
-  }, [buffering, setBuffering]);
-
+  // Relay transcripts → append + send to pipeline
   useEffect(() => {
     if (!useMockStream && relayTranscripts.length > 0) {
       const latest = relayTranscripts[relayTranscripts.length - 1];
@@ -99,28 +80,28 @@ export default function RayBansPage() {
         timestamp: latest.timestamp,
         speaker: latest.source,
       });
+      sendTranscript(latest.text);
     }
-  }, [useMockStream, relayTranscripts, appendTranscript]);
+  }, [useMockStream, relayTranscripts, appendTranscript, sendTranscript]);
 
   const handleChunk = useCallback(
     (chunk: TranscriptChunk) => {
       appendTranscript(chunk);
-      sendToPolymarket(chunk.text);
+      sendTranscript(chunk.text);
     },
-    [appendTranscript, sendToPolymarket]
+    [appendTranscript, sendTranscript]
   );
 
   const toggleStream = useCallback(() => {
     if (isStreaming) {
       setIsStreaming(false);
       setConnected(false);
-      disconnectPolymarket();
       disconnectRelay();
+      resetPipeline();
     } else {
       setMode("raybans");
       setConnected(true);
       setIsStreaming(true);
-      connectPolymarket();
       if (!useMockStream) {
         connectRelay();
       }
@@ -130,27 +111,32 @@ export default function RayBansPage() {
     useMockStream,
     setConnected,
     setMode,
-    connectPolymarket,
-    disconnectPolymarket,
     connectRelay,
     disconnectRelay,
+    resetPipeline,
   ]);
 
+  // Mock stream
   useEffect(() => {
     if (!isStreaming || !useMockStream) return;
     const cleanup = startMockStream(handleChunk);
     return cleanup;
   }, [isStreaming, useMockStream, handleChunk]);
 
+  // Cleanup on unmount
   useEffect(() => {
     return () => {
       reset();
       clearOpportunities();
+      resetPipeline();
     };
-  }, [reset, clearOpportunities]);
+  }, [reset, clearOpportunities, resetPipeline]);
 
-  const isLiveConnected = polymarketState === "connected" || relayState === "connected";
-  const bufferPercent = buffering ? Math.min((buffering.chars / buffering.threshold) * 100, 100) : 0;
+  const isLiveConnected = isStreaming || relayState === "connected";
+  const connectionState = isStreaming ? "connected" : "disconnected";
+  const bufferPercent = buffering
+    ? Math.min((buffering.chars / buffering.threshold) * 100, 100)
+    : 0;
 
   return (
     <div className="h-full flex flex-col bg-background">
@@ -172,7 +158,7 @@ export default function RayBansPage() {
           <div className="flex items-center gap-4 text-xs font-mono">
             <div className={`flex items-center gap-1.5 ${isLiveConnected ? "text-chart-4" : "text-muted-foreground"}`}>
               <div className={`w-1.5 h-1.5 rounded-full ${isLiveConnected ? "bg-chart-4 animate-pulse" : "bg-muted-foreground/50"}`} />
-              <span>WS:{polymarketState.toUpperCase()}</span>
+              <span>{isProcessing ? "ANALYZING" : isStreaming ? "STREAMING" : "IDLE"}</span>
             </div>
             <div className="text-muted-foreground">
               BUFFER: <span className={buffering ? "text-chart-2" : "text-muted-foreground/50"}>{buffering?.chars ?? 0}/{buffering?.threshold ?? 600}</span>
@@ -188,10 +174,10 @@ export default function RayBansPage() {
       </div>
 
       {/* Error Banner */}
-      {polymarketError && (
+      {pipelineError && (
         <div className="px-4 py-2 bg-destructive/10 border-b border-destructive/30 text-destructive text-xs font-mono flex items-center gap-2">
           <Zap className="h-3 w-3" />
-          ERROR: {polymarketError}
+          ERROR: {pipelineError}
         </div>
       )}
 
@@ -217,7 +203,7 @@ export default function RayBansPage() {
           <VideoControlBar
             isStreaming={isStreaming}
             useMockStream={useMockStream}
-            connectionState={polymarketState}
+            connectionState={connectionState}
             bufferChars={buffering?.chars}
             bufferThreshold={buffering?.threshold}
             onToggleStream={toggleStream}
