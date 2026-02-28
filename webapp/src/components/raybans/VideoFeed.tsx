@@ -71,11 +71,11 @@ export function VideoFeed({
         </div>
       </div>
 
-      {/* Video area */}
+      {/* Video area - fills container (aspect ratio handled by parent) */}
       <div
         className={cn(
-          "relative flex-1 bg-muted/50",
-          isFullscreen && "fixed inset-0 z-50 bg-background"
+          "relative flex-1 min-h-0 bg-muted/30 overflow-hidden",
+          isFullscreen && "fixed inset-0 z-50 bg-black flex items-center justify-center"
         )}
       >
         {frameUrl && !imageError ? (

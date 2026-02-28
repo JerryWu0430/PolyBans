@@ -3,6 +3,7 @@
 import { cn } from "@/lib/utils";
 import { TrendingUp, Radio } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Terminal } from "./Terminal";
 import type { PolymarketMarket } from "@/lib/types/polymarket-stream";
 import { useArbitrageStore } from "@/lib/stores/arbitrageStore";
 
@@ -23,7 +24,7 @@ export function MarketsSidebar({
     <>
       <div
         className={cn(
-          "w-80 border-l border-border/50 flex flex-col bg-card/30 min-h-0",
+          "flex-1 min-w-[280px] border-l border-border/50 flex flex-col bg-card/30 min-h-0",
           className
         )}
       >
@@ -64,6 +65,9 @@ export function MarketsSidebar({
             )}
           </div>
         </ScrollArea>
+
+        {/* Terminal */}
+        <Terminal className="h-100" />
       </div>
     </>
   );
