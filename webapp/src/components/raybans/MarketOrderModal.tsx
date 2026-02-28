@@ -7,11 +7,8 @@ import {
   TrendingUp,
   BarChart3,
   Droplets,
-  Brain,
-  AlertTriangle,
-  Sparkles,
-  Target,
 } from "lucide-react";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Dialog,
   DialogContent,
@@ -22,14 +19,13 @@ import { useArbitrageStore } from "@/lib/stores/arbitrageStore";
 import type { SubMarket } from "@/lib/types/polymarket-stream";
 
 export function MarketOrderModal() {
-  const { selectedMarketForOrder, isOrderModalOpen, closeOrderModal, latestAnalysis } =
+  const { selectedMarketForOrder, isOrderModalOpen, closeOrderModal } =
     useArbitrageStore();
   const [hoveredSubMarket, setHoveredSubMarket] = useState<SubMarket | null>(null);
 
   const market = selectedMarketForOrder;
   const hasSubMarkets = market?.subMarkets && market.subMarkets.length > 1;
   const embedSlug = hoveredSubMarket?.slug || market?.subMarkets?.[0]?.slug;
-  const strategy = latestAnalysis?.strategy;
 
   return (
     <Dialog open={isOrderModalOpen} onOpenChange={closeOrderModal}>
@@ -52,73 +48,6 @@ export function MarketOrderModal() {
                 </div>
               </DialogTitle>
             </DialogHeader>
-
-            {/* AI Strategy - Full width below title */}
-            {strategy && (
-              <div className="p-4 rounded-xl bg-muted/30 border border-border/50">
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center gap-2">
-                    <Brain className="h-4 w-4 text-muted-foreground" />
-                    <span className="text-sm font-bold text-foreground uppercase tracking-wider">
-                      AI Strategy
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="px-2 py-1 text-xs font-bold uppercase rounded-full bg-muted text-muted-foreground">
-                      {strategy.sentiment}
-                    </span>
-                    <span className="px-2 py-1 text-xs font-mono rounded-full border border-border text-muted-foreground">
-                      {strategy.confidence} confidence
-                    </span>
-                  </div>
-                </div>
-
-                <p className="text-sm text-foreground/90 leading-relaxed mb-3">
-                  {strategy.summary}
-                </p>
-
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                  {strategy.edge && (
-                    <div className="p-3 rounded-lg bg-muted/50 border border-border/50">
-                      <div className="flex items-center gap-1.5 mb-1">
-                        <Sparkles className="h-3 w-3 text-muted-foreground" />
-                        <p className="text-[10px] font-bold text-muted-foreground uppercase">Edge</p>
-                      </div>
-                      <p className="text-xs text-foreground/80">{strategy.edge}</p>
-                    </div>
-                  )}
-                  {strategy.undervalued && (
-                    <div className="p-3 rounded-lg bg-muted/50 border border-border/50">
-                      <div className="flex items-center gap-1.5 mb-1">
-                        <Target className="h-3 w-3 text-muted-foreground" />
-                        <p className="text-[10px] font-bold text-muted-foreground uppercase">Undervalued</p>
-                      </div>
-                      <p className="text-xs text-foreground/80">{strategy.undervalued}</p>
-                    </div>
-                  )}
-                  {strategy.risk && (
-                    <div className="p-3 rounded-lg bg-muted/50 border border-border/50">
-                      <div className="flex items-center gap-1.5 mb-1">
-                        <AlertTriangle className="h-3 w-3 text-muted-foreground" />
-                        <p className="text-[10px] font-bold text-muted-foreground uppercase">Risk</p>
-                      </div>
-                      <p className="text-xs text-foreground/80">{strategy.risk}</p>
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
-
-            {/* Fallback simple analysis if no strategy */}
-            {latestAnalysis && !strategy && (
-              <div className="p-3 rounded-lg bg-muted/30 border border-border/30">
-                <div className="flex items-center gap-1.5 mb-2">
-                  <Brain className="h-3 w-3 text-muted-foreground" />
-                  <span className="text-xs font-bold text-muted-foreground uppercase">Analysis</span>
-                </div>
-                <p className="text-sm text-foreground/90">{latestAnalysis.reason}</p>
-              </div>
-            )}
 
             {/* Two-column layout */}
             <div className="grid grid-cols-1 lg:grid-cols-5 gap-5 mt-2">
@@ -158,7 +87,7 @@ export function MarketOrderModal() {
                     <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
                       Market Outcomes
                     </span>
-                    <div className="rounded-lg border border-border/30 overflow-hidden max-h-[280px] overflow-y-auto">
+                    <ScrollArea className="rounded-lg border border-border/30 max-h-[280px]">
                       <table className="w-full text-sm">
                         <thead className="bg-muted/40 sticky top-0">
                           <tr className="text-xs text-muted-foreground uppercase">
@@ -202,7 +131,7 @@ export function MarketOrderModal() {
                           ))}
                         </tbody>
                       </table>
-                    </div>
+                    </ScrollArea>
                   </div>
                 )}
 

@@ -1,8 +1,10 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
-import { ChevronUp, ChevronDown, MessageSquare, Clock } from "lucide-react";
+import { ChevronUp } from "lucide-react";
+import { motion, AnimatePresence } from "motion/react";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import type { TranscriptChunk } from "@/lib/types/stream";
 
 interface TranscriptOverlayProps {
@@ -21,202 +23,138 @@ export function TranscriptOverlay({
   className,
 }: TranscriptOverlayProps) {
   const [isExpanded, setIsExpanded] = useState(false);
-  const scrollRef = useRef<HTMLDivElement>(null);
+  const bottomRef = useRef<HTMLDivElement>(null);
 
-  // Auto-scroll when expanded
+  // Auto-scroll to bottom
   useEffect(() => {
-    if (isExpanded && scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    if (bottomRef.current) {
+      bottomRef.current.scrollIntoView({ behavior: "smooth" });
     }
-  }, [chunks, isExpanded]);
+  }, [chunks]);
 
-  const latestChunks = chunks.slice(-2);
   const allChunks = chunks.slice(-50);
 
   return (
     <div
       className={cn(
-        "absolute bottom-0 left-0 right-0 transition-all duration-300 ease-out",
-        isExpanded ? "top-0" : "",
+        "absolute right-3 w-1/5 min-w-[220px] group/transcript",
+        "transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)]",
+        isExpanded ? "top-12 bottom-3" : "top-12 h-36",
         className
       )}
     >
-      {/* Backdrop for expanded state */}
-      {isExpanded && (
-        <div
-          className="absolute inset-0 bg-background/60 backdrop-blur-sm"
-          onClick={() => setIsExpanded(false)}
-        />
-      )}
-
-      {/* Overlay container */}
+      {/* Terminal container */}
       <div
         className={cn(
-          "absolute left-0 right-0 bottom-0 transition-all duration-300",
+          "h-full flex flex-col rounded-xl border border-border/50 overflow-hidden",
+          "bg-[#0d1117] backdrop-blur-md",
+          "transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)]",
           isExpanded
-            ? "top-4 mx-4 rounded-xl border border-border/50"
-            : "mx-3 mb-3 rounded-lg"
+            ? "shadow-xl shadow-black/30 opacity-100"
+            : "opacity-60 hover:opacity-100 group-hover/transcript:opacity-100"
         )}
       >
-        {/* Main content */}
-        <div
-          className={cn(
-            "bg-card/90 backdrop-blur-md overflow-hidden",
-            isExpanded ? "rounded-xl h-full flex flex-col" : "rounded-lg"
-          )}
+        {/* Terminal header */}
+        <button
+          onClick={() => setIsExpanded(!isExpanded)}
+          className="flex items-center justify-between px-3 py-2 bg-[#161b22] border-b border-border/30 hover:bg-[#1c2128] transition-all duration-200 active:scale-[0.99]"
         >
-          {/* Header / Collapse toggle */}
-          <button
-            onClick={() => setIsExpanded(!isExpanded)}
-            className={cn(
-              "w-full flex items-center justify-between px-3 py-2 hover:bg-muted/30 transition-colors",
-              isExpanded && "border-b border-border/30"
-            )}
-          >
-            <div className="flex items-center gap-2">
-              <MessageSquare className="h-3.5 w-3.5 text-primary" />
-              <span className="text-xs font-bold tracking-wider">TRANSCRIPT</span>
-              <span className="text-[10px] font-mono text-muted-foreground">
-                {chunks.length} chunks
-              </span>
+          <div className="flex items-center gap-2">
+            <div className="flex gap-1.5">
+              <div className="w-2.5 h-2.5 rounded-full bg-[#ff5f56]" />
+              <div className="w-2.5 h-2.5 rounded-full bg-[#ffbd2e]" />
+              <div className="w-2.5 h-2.5 rounded-full bg-[#27ca40]" />
             </div>
-            <div className="flex items-center gap-2">
-              <span className="text-[10px] text-muted-foreground">
-                {isExpanded ? "Collapse" : "View all"}
-              </span>
-              {isExpanded ? (
-                <ChevronDown className="h-4 w-4 text-muted-foreground" />
-              ) : (
-                <ChevronUp className="h-4 w-4 text-muted-foreground" />
+            <span className="text-[10px] font-mono text-[#8b949e] ml-2">transcript</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <span className="text-[10px] font-mono text-[#8b949e]">
+              {chunks.length}
+            </span>
+            <ChevronUp
+              className={cn(
+                "h-3 w-3 text-[#8b949e] transition-transform duration-300",
+                isExpanded && "rotate-180"
               )}
-            </div>
-          </button>
+            />
+          </div>
+        </button>
 
-          {/* Collapsed: Latest 1-2 lines + live partial */}
+        {/* Terminal content */}
+        <ScrollArea className="flex-1 min-h-0 relative">
+          {/* Bottom fade for collapsed */}
           {!isExpanded && (
-            <div className="px-3 py-2 space-y-1 max-h-24 overflow-hidden">
-              {latestChunks.length === 0 && !livePartial ? (
-                <p className="text-xs text-muted-foreground/60 italic">
-                  {isStreaming ? "Listening..." : "Start stream to capture audio"}
-                </p>
-              ) : (
-                <>
-                  {latestChunks.map((chunk, i) => (
-                    <div key={i} className="flex items-start gap-2">
-                      <span className="text-[10px] font-mono text-muted-foreground/70 shrink-0 pt-0.5">
-                        {formatTime(chunk.timestamp)}
-                      </span>
-                      <p className="text-xs text-foreground/90 leading-relaxed line-clamp-1">
-                        {chunk.speaker && (
-                          <span className="font-semibold text-primary mr-1">{chunk.speaker}:</span>
-                        )}
-                        {chunk.text}
-                      </p>
-                    </div>
-                  ))}
-                  {livePartial && (
-                    <div className="flex items-start gap-2 opacity-70">
-                      <span className="text-[10px] font-mono text-muted-foreground/50 shrink-0 pt-0.5">
-                        {formatTime(livePartial.timestamp)}
-                      </span>
-                      <p className="text-xs text-foreground/70 leading-relaxed line-clamp-1 italic">
-                        {livePartial.text}<span className="animate-pulse">▋</span>
-                      </p>
-                    </div>
-                  )}
-                </>
-              )}
-            </div>
+            <div className="absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-[#0d1117] to-transparent z-10 pointer-events-none" />
           )}
 
-          {/* Expanded: Full transcript */}
-          {isExpanded && (
-            <div
-              ref={scrollRef}
-              className="flex-1 overflow-y-auto scrollbar-terminal p-3 space-y-1"
-            >
+          <div className="p-3 font-mono text-xs">
+            <AnimatePresence mode="popLayout">
               {allChunks.length === 0 && !livePartial ? (
-                <div className="flex flex-col items-center justify-center h-full py-8">
-                  <div className="w-12 h-12 rounded-xl bg-muted/50 border border-border/50 flex items-center justify-center mb-3">
-                    <MessageSquare className="h-5 w-5 text-muted-foreground/50" />
-                  </div>
-                  <p className="text-sm text-muted-foreground">Awaiting transcript</p>
-                  <p className="text-xs text-muted-foreground/60 mt-0.5">
-                    Speech will appear here
-                  </p>
-                </div>
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  className="text-[#8b949e]"
+                >
+                  <span className="text-[#7ee787]">$</span>{" "}
+                  {isStreaming ? (
+                    <span className="text-[#8b949e]">
+                      listening<span className="animate-pulse">...</span>
+                    </span>
+                  ) : (
+                    "awaiting stream"
+                  )}
+                </motion.div>
               ) : (
-                <>
+                <div className="space-y-1.5">
                   {allChunks.map((chunk, idx) => (
-                    <div
+                    <motion.div
                       key={`${chunk.timestamp}-${idx}`}
+                      initial={{ opacity: 0, x: -10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ duration: 0.3, ease: "easeOut" }}
                       className={cn(
-                        "group flex gap-3 px-3 py-2 rounded-lg transition-colors",
-                        idx === allChunks.length - 1 && !livePartial
-                          ? "bg-primary/5 border border-primary/10"
-                          : "hover:bg-muted/50"
+                        "leading-relaxed",
+                        idx >= allChunks.length - 2
+                          ? "text-[#c9d1d9]"
+                          : "text-[#8b949e]"
                       )}
                     >
-                      <div className="flex items-center gap-1 shrink-0 pt-0.5">
-                        <Clock className="h-3 w-3 text-muted-foreground/50" />
-                        <span className="text-[10px] font-mono text-muted-foreground/70 tabular-nums">
-                          {formatTime(chunk.timestamp)}
-                        </span>
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        {chunk.speaker && (
-                          <span className="text-xs font-semibold text-primary mr-1.5">
-                            {chunk.speaker}:
-                          </span>
-                        )}
-                        <span className="text-sm leading-relaxed">{chunk.text}</span>
-                      </div>
-                    </div>
+                      <span className="text-[#7ee787]">{">"}</span>{" "}
+                      {chunk.text}
+                    </motion.div>
                   ))}
                   {livePartial && (
-                    <div className="group flex gap-3 px-3 py-2 rounded-lg bg-primary/5 border border-primary/10">
-                      <div className="flex items-center gap-1 shrink-0 pt-0.5">
-                        <Clock className="h-3 w-3 text-muted-foreground/50" />
-                        <span className="text-[10px] font-mono text-muted-foreground/70 tabular-nums">
-                          {formatTime(livePartial.timestamp)}
-                        </span>
-                      </div>
-                      <div className="flex-1 min-w-0 opacity-75">
-                        <span className="text-sm leading-relaxed italic">{livePartial.text}</span>
-                        <span className="animate-pulse ml-0.5">▋</span>
-                      </div>
-                      <div className="shrink-0 pt-1">
-                        <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
-                      </div>
-                    </div>
+                    <motion.div
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      className="text-[#58a6ff]"
+                    >
+                      <span className="text-[#7ee787]">{">"}</span>{" "}
+                      {livePartial.text}
+                      <span className="animate-pulse ml-0.5 text-[#7ee787]">▋</span>
+                    </motion.div>
                   )}
-                </>
+                </div>
               )}
-            </div>
-          )}
+            </AnimatePresence>
+            <div ref={bottomRef} />
+          </div>
+        </ScrollArea>
 
-          {/* Buffer progress bar (collapsed only) */}
-          {!isExpanded && isStreaming && (
-            <div className="px-3 pb-2">
-              <div className="h-1 bg-muted rounded-full overflow-hidden">
-                <div
-                  className="h-full bg-gradient-to-r from-chart-1 to-chart-4 transition-all duration-300"
-                  style={{ width: `${bufferPercent}%` }}
-                />
-              </div>
+        {/* Buffer progress bar */}
+        {isStreaming && (
+          <div className="px-3 py-2 border-t border-border/20 bg-[#161b22]">
+            <div className="h-1 bg-[#21262d] rounded-full overflow-hidden">
+              <motion.div
+                className="h-full bg-gradient-to-r from-[#238636] to-[#7ee787]"
+                initial={{ width: 0 }}
+                animate={{ width: `${bufferPercent}%` }}
+                transition={{ duration: 0.3, ease: "easeOut" }}
+              />
             </div>
-          )}
-        </div>
+          </div>
+        )}
       </div>
     </div>
   );
-}
-
-function formatTime(timestamp: number): string {
-  return new Date(timestamp).toLocaleTimeString("en-US", {
-    hour: "2-digit",
-    minute: "2-digit",
-    second: "2-digit",
-    hour12: false,
-  });
 }

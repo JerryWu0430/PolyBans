@@ -6,15 +6,18 @@ import { useArbitrageStore } from "@/lib/stores/arbitrageStore";
 import { useAnalysisPipeline } from "@/lib/hooks/useAnalysisPipeline";
 import { useRelayStream } from "@/lib/hooks/useRelayStream";
 import { useFrameStream } from "@/lib/hooks/useFrameStream";
+import { useVisionSummary } from "@/lib/hooks/useVisionSummary";
 import { startMockStream } from "@/lib/mockStream";
 import { useTradeConfirmation } from "@/lib/hooks/useTradeConfirmation";
 import { VideoFeed } from "@/components/raybans/VideoFeed";
 import { TranscriptOverlay } from "@/components/raybans/TranscriptOverlay";
+import { VisionSummaryOverlay } from "@/components/raybans/VisionSummaryOverlay";
 import { MarketsSidebar } from "@/components/raybans/MarketsSidebar";
 import { VideoControlBar } from "@/components/raybans/VideoControlBar";
 import { MarketOrderModal } from "@/components/raybans/MarketOrderModal";
 import { TradeConfirmationBanner } from "@/components/raybans/TradeConfirmationBanner";
 import { Glasses, Clock, Zap, Volume2 } from "lucide-react";
+import { ModeToggle } from "@/components/layout/ModeToggle";
 import type { TranscriptChunk } from "@/lib/types/stream";
 
 export default function RayBansPage() {
@@ -61,6 +64,18 @@ export default function RayBansPage() {
 
   const [isStreaming, setIsStreaming] = useState(false);
   const [useMockStream, setUseMockStream] = useState(true);
+
+  // Vision analysis - only active when streaming real frames
+  const {
+    description: visionDescription,
+    isProcessing: visionProcessing,
+    error: visionError,
+    lastUpdated: visionLastUpdated,
+    reset: resetVision,
+  } = useVisionSummary(frameUrl, {
+    enabled: isStreaming && !useMockStream && !!frameUrl,
+    intervalMs: 5000,
+  });
   const [currentTime, setCurrentTime] = useState(new Date());
   const [ttsText, setTtsText] = useState("");
   const [ttsSending, setTtsSending] = useState(false);
@@ -122,13 +137,7 @@ export default function RayBansPage() {
     }
   }, [useMockStream, relayTranscripts, appendTranscript, sendTranscript]);
 
-  // When buffer hits 600 chars and flushes → clear the transcript list only
-  useEffect(() => {
-    if (flushCount > 0) {
-      reset(); // clear displayed transcript rows — delta ref stays intact
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [flushCount]);
+  // Note: We no longer clear transcript on buffer flush - transcripts accumulate
 
   const handleChunk = useCallback(
     (chunk: TranscriptChunk) => {
@@ -145,6 +154,7 @@ export default function RayBansPage() {
       disconnectRelay();
       disconnectFrames();
       resetPipeline();
+      resetVision();
     } else {
       setMode("raybans");
       setConnected(true);
@@ -162,6 +172,7 @@ export default function RayBansPage() {
     connectRelay,
     disconnectRelay,
     resetPipeline,
+    resetVision,
   ]);
 
   // Mock stream
@@ -177,8 +188,9 @@ export default function RayBansPage() {
       reset();
       clearOpportunities();
       resetPipeline();
+      resetVision();
     };
-  }, [reset, clearOpportunities, resetPipeline]);
+  }, [reset, clearOpportunities, resetPipeline, resetVision]);
 
   const isLiveConnected = isStreaming || relayState === "connected";
   const connectionState = isStreaming ? "connected" : "disconnected";
@@ -215,10 +227,13 @@ export default function RayBansPage() {
             </div>
           </div>
 
-          {/* Right side - clock */}
-          <div className="flex items-center gap-1.5 text-xs font-mono text-muted-foreground">
-            <Clock className="h-3 w-3" />
-            <span suppressHydrationWarning>{currentTime.toLocaleTimeString("en-US", { hour12: false })}</span>
+          {/* Right side - clock & controls */}
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-1.5 text-xs font-mono text-muted-foreground">
+              <Clock className="h-3 w-3" />
+              <span suppressHydrationWarning>{currentTime.toLocaleTimeString("en-US", { hour12: false })}</span>
+            </div>
+            <ModeToggle />
           </div>
         </div>
 
@@ -232,36 +247,8 @@ export default function RayBansPage() {
 
         {/* Main Content Area */}
         <div className="flex-1 flex min-h-0">
-          {/* Left: Video Feed with Overlay */}
-          <div className="flex-1 flex flex-col min-h-0">
-            {/* Video + Transcript Overlay */}
-            <div className="flex-1 relative min-h-0">
-              <VideoFeed
-                frameUrl={!useMockStream ? frameUrl ?? undefined : undefined}
-                isConnected={isLiveConnected}
-                isMock={useMockStream}
-                className="absolute inset-0 rounded-none border-0"
-              />
-              <TranscriptOverlay
-                chunks={transcript}
-                bufferPercent={bufferPercent}
-                isStreaming={isStreaming}
-              />
-            </div>
-
-            {/* Trade Confirmation Banner */}
-            {tradeConfirmation.confirmationState !== "idle" && (
-              <TradeConfirmationBanner
-                state={tradeConfirmation.confirmationState}
-                market={tradeConfirmation.pendingMarket}
-                subMarket={tradeConfirmation.pendingSubMarket}
-                timeoutProgress={tradeConfirmation.timeoutProgress}
-                lastTradeResult={tradeConfirmation.lastTradeResult}
-                onCancel={tradeConfirmation.manualCancel}
-              />
-            )}
-
-            {/* Control Bar */}
+          {/* Left: Controls Sidebar */}
+          <div className="w-40 shrink-0 flex flex-col border-r border-border/30 bg-card/50">
             <VideoControlBar
               isStreaming={isStreaming}
               useMockStream={useMockStream}
@@ -270,17 +257,20 @@ export default function RayBansPage() {
               bufferThreshold={buffering?.threshold}
               onToggleStream={toggleStream}
               onToggleMock={() => setUseMockStream(!useMockStream)}
+              vertical
             />
 
             {/* TTS Input */}
-            <div className="flex items-center gap-2 px-4 py-2 border-t border-border/50 bg-card/50">
-              <Volume2 className="h-4 w-4 text-muted-foreground shrink-0" />
-              <input
-                type="text"
+            <div className="flex flex-col gap-2 p-3 border-t border-border/30">
+              <div className="flex items-center gap-1.5 text-[10px] font-mono text-muted-foreground uppercase">
+                <Volume2 className="h-3 w-3" />
+                <span>TTS</span>
+              </div>
+              <textarea
                 value={ttsText}
                 onChange={(e) => setTtsText(e.target.value)}
                 onKeyDown={(e) => {
-                  if (e.key === "Enter" && ttsText.trim() && !ttsSending) {
+                  if (e.key === "Enter" && !e.shiftKey && ttsText.trim() && !ttsSending) {
                     e.preventDefault();
                     const text = ttsText.trim();
                     setTtsText("");
@@ -288,8 +278,8 @@ export default function RayBansPage() {
                     sendTts(text).catch(console.error).finally(() => setTtsSending(false));
                   }
                 }}
-                placeholder="Type text to speak through glasses..."
-                className="flex-1 bg-background/50 border border-border/50 rounded px-3 py-1.5 text-sm font-mono placeholder:text-muted-foreground/50 focus:outline-none focus:border-primary/50"
+                placeholder="Speak to glasses..."
+                className="w-full h-20 bg-background/50 border border-border/50 rounded px-2 py-1.5 text-xs font-mono placeholder:text-muted-foreground/50 focus:outline-none focus:border-primary/50 resize-none"
                 disabled={ttsSending}
               />
               <button
@@ -302,11 +292,47 @@ export default function RayBansPage() {
                   }
                 }}
                 disabled={!ttsText.trim() || ttsSending}
-                className="px-3 py-1.5 text-xs font-mono bg-primary/20 border border-primary/30 rounded hover:bg-primary/30 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                className="w-full px-2 py-1.5 text-[10px] font-mono uppercase bg-primary/20 border border-primary/30 rounded hover:bg-primary/30 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
-                {ttsSending ? "SENDING..." : "SEND TO GLASSES"}
+                {ttsSending ? "SENDING..." : "SEND"}
               </button>
             </div>
+          </div>
+
+          {/* Center: Video Feed with Overlay - 9:16 portrait */}
+          <div className="relative h-full aspect-[9/16] shrink-0 flex flex-col">
+            <div className="relative flex-1">
+              <VideoFeed
+                frameUrl={!useMockStream ? frameUrl ?? undefined : undefined}
+                isConnected={isLiveConnected}
+                isMock={useMockStream}
+                className="absolute inset-0 rounded-none border-0"
+              />
+              <TranscriptOverlay
+                chunks={transcript}
+                bufferPercent={bufferPercent}
+                isStreaming={isStreaming}
+              />
+              <VisionSummaryOverlay
+                description={visionDescription}
+                isProcessing={visionProcessing}
+                error={visionError}
+                lastUpdated={visionLastUpdated}
+                isMock={useMockStream}
+                isStreaming={isStreaming}
+              />
+            </div>
+            {/* Trade Confirmation Banner */}
+            {tradeConfirmation.confirmationState !== "idle" && (
+              <TradeConfirmationBanner
+                state={tradeConfirmation.confirmationState}
+                market={tradeConfirmation.pendingMarket}
+                subMarket={tradeConfirmation.pendingSubMarket}
+                timeoutProgress={tradeConfirmation.timeoutProgress}
+                lastTradeResult={tradeConfirmation.lastTradeResult}
+                onCancel={tradeConfirmation.manualCancel}
+              />
+            )}
           </div>
 
           {/* Right: Markets Sidebar */}

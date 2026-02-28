@@ -1,7 +1,9 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import { TrendingUp, Radio } from "lucide-react";
+import { TrendingUp, Radio, Brain, Sparkles, Target, AlertTriangle } from "lucide-react";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Terminal } from "./Terminal";
 import type { PolymarketMarket } from "@/lib/types/polymarket-stream";
 import { useArbitrageStore } from "@/lib/stores/arbitrageStore";
 
@@ -17,12 +19,14 @@ export function MarketsSidebar({
   className,
 }: MarketsSidebarProps) {
   const openOrderModal = useArbitrageStore((s) => s.openOrderModal);
+  const latestAnalysis = useArbitrageStore((s) => s.latestAnalysis);
+  const strategy = latestAnalysis?.strategy;
 
   return (
     <>
       <div
         className={cn(
-          "w-80 border-l border-border/50 flex flex-col bg-card/30",
+          "flex-1 min-w-[280px] border-l border-border/50 flex flex-col bg-card/30 min-h-0",
           className
         )}
       >
@@ -39,30 +43,99 @@ export function MarketsSidebar({
           )}
         </div>
 
-        {/* Markets List */}
-        <div className="flex-1 overflow-y-auto scrollbar-terminal p-3 space-y-2">
-          {markets.length === 0 ? (
-            <div className="h-full flex flex-col items-center justify-center text-muted-foreground/50 py-8">
-              <TrendingUp className="h-8 w-8 mb-3" />
-              <p className="text-sm font-medium">No markets detected</p>
-              <p className="text-xs mt-1 text-center px-4">
-                {isStreaming
-                  ? "Analyzing transcript..."
-                  : "Start stream to detect markets"}
-              </p>
-            </div>
-          ) : (
-            markets.map((market) => (
-              <MarketCard
-                key={market.id}
-                market={market}
-                onClick={() => openOrderModal(market)}
-              />
-            ))
-          )}
-        </div>
-      </div>
+        {/* Markets Grid */}
+        <ScrollArea className="flex-1 min-h-0">
+          <div className="p-3">
+            {markets.length === 0 ? (
+              <div className="h-full flex flex-col items-center justify-center text-muted-foreground/50 py-8">
+                <TrendingUp className="h-8 w-8 mb-3" />
+                <p className="text-sm font-medium">No markets detected</p>
+                <p className="text-xs mt-1 text-center px-4">
+                  {isStreaming
+                    ? "Analyzing transcript..."
+                    : "Start stream to detect markets"}
+                </p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-4 gap-2">
+                {markets.map((market) => (
+                  <MarketCard
+                    key={market.id}
+                    market={market}
+                    onClick={() => openOrderModal(market)}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+        </ScrollArea>
 
+        {/* AI Strategy Panel */}
+        {strategy && (
+          <div className="border-t border-border/30 p-3 bg-muted/20">
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-1.5">
+                <Brain className="h-3.5 w-3.5 text-chart-4" />
+                <span className="text-[10px] font-bold uppercase tracking-wider">AI Strategy</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <span className="px-1.5 py-0.5 text-[9px] font-bold uppercase rounded bg-muted text-muted-foreground">
+                  {strategy.sentiment}
+                </span>
+                <span className="px-1.5 py-0.5 text-[9px] font-mono rounded border border-border/50 text-muted-foreground">
+                  {strategy.confidence}
+                </span>
+              </div>
+            </div>
+            <p className="text-xs text-foreground/80 leading-relaxed mb-2 line-clamp-2">
+              {strategy.summary}
+            </p>
+            <div className="grid grid-cols-3 gap-2">
+              {strategy.edge && (
+                <div className="p-2 rounded bg-muted/40 border border-border/30">
+                  <div className="flex items-center gap-1 mb-0.5">
+                    <Sparkles className="h-2.5 w-2.5 text-muted-foreground" />
+                    <span className="text-[8px] font-bold text-muted-foreground uppercase">Edge</span>
+                  </div>
+                  <p className="text-[10px] text-foreground/70 line-clamp-2">{strategy.edge}</p>
+                </div>
+              )}
+              {strategy.undervalued && (
+                <div className="p-2 rounded bg-muted/40 border border-border/30">
+                  <div className="flex items-center gap-1 mb-0.5">
+                    <Target className="h-2.5 w-2.5 text-muted-foreground" />
+                    <span className="text-[8px] font-bold text-muted-foreground uppercase">Target</span>
+                  </div>
+                  <p className="text-[10px] text-foreground/70 line-clamp-2">{strategy.undervalued}</p>
+                </div>
+              )}
+              {strategy.risk && (
+                <div className="p-2 rounded bg-muted/40 border border-border/30">
+                  <div className="flex items-center gap-1 mb-0.5">
+                    <AlertTriangle className="h-2.5 w-2.5 text-muted-foreground" />
+                    <span className="text-[8px] font-bold text-muted-foreground uppercase">Risk</span>
+                  </div>
+                  <p className="text-[10px] text-foreground/70 line-clamp-2">{strategy.risk}</p>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Fallback analysis if no strategy */}
+        {latestAnalysis && !strategy && (
+          <div className="border-t border-border/30 p-3 bg-muted/20">
+            <div className="flex items-center gap-1.5 mb-1.5">
+              <Brain className="h-3 w-3 text-muted-foreground" />
+              <span className="text-[10px] font-bold text-muted-foreground uppercase">Analysis</span>
+            </div>
+            <p className="text-xs text-foreground/80 line-clamp-2">{latestAnalysis.reason}</p>
+          </div>
+        )}
+
+        {/* Terminal */}
+        <Terminal className="h-100" />
+      </div>
     </>
   );
 }
@@ -77,69 +150,67 @@ function MarketCard({
   return (
     <button
       onClick={onClick}
-      className="w-full text-left p-3 rounded-lg border border-border/50 bg-card hover:border-primary/40 hover:bg-card/80 transition-all group"
+      className="w-full h-full text-left p-2 rounded-lg border border-border/50 bg-card hover:border-primary/40 hover:bg-card/80 transition-all group flex flex-col"
     >
       {/* Header */}
-      <div className="flex gap-3 mb-2">
+      <div className="flex gap-2 mb-1">
         {market.image && (
           <img
             src={market.image}
             alt=""
-            className="w-10 h-10 rounded-md object-cover shrink-0 border border-border/30"
+            className="w-7 h-7 rounded object-cover shrink-0 border border-border/30"
           />
         )}
-        <div className="flex-1 min-w-0">
-          <h3 className="text-sm font-medium leading-snug line-clamp-2 group-hover:text-primary transition-colors">
-            {market.question || market.title}
-          </h3>
-        </div>
+        <h3 className="text-[11px] font-medium leading-tight line-clamp-2 group-hover:text-primary transition-colors flex-1">
+          {market.question || market.title}
+        </h3>
       </div>
 
       {/* Volume */}
       {market.volume && (
-        <p className="text-[10px] font-mono text-muted-foreground mb-2">
-          VOL: ${parseFloat(market.volume).toLocaleString()}
+        <p className="text-[9px] font-mono text-muted-foreground mb-1">
+          ${parseFloat(market.volume).toLocaleString()}
         </p>
       )}
 
-      {/* Sub-markets preview (multi-outcome) */}
-      {market.subMarkets && market.subMarkets.length > 1 ? (
-        <div className="space-y-1 mb-2">
-          {market.subMarkets.slice(0, 3).map((sm, i) => (
-            <div key={i} className="flex items-center justify-between text-xs">
-              <span className="text-muted-foreground truncate mr-2">
-                {sm.groupItemTitle}
+      {/* Sub-markets preview */}
+      <div className="mt-auto space-y-0.5">
+        {market.subMarkets && market.subMarkets.length > 1 ? (
+          <>
+            {market.subMarkets.slice(0, 2).map((sm, i) => (
+              <div key={i} className="flex items-center justify-between text-[9px]">
+                <span className="text-muted-foreground truncate mr-1">
+                  {sm.groupItemTitle}
+                </span>
+                <span
+                  className={cn(
+                    "font-mono font-bold shrink-0",
+                    sm.yesPrice >= 0.7
+                      ? "text-chart-4"
+                      : sm.yesPrice <= 0.3
+                      ? "text-destructive"
+                      : "text-foreground"
+                  )}
+                >
+                  {(sm.yesPrice * 100).toFixed(0)}%
+                </span>
+              </div>
+            ))}
+            {market.subMarkets.length > 2 && (
+              <span className="text-[8px] text-muted-foreground">
+                +{market.subMarkets.length - 2}
               </span>
-              <span
-                className={cn(
-                  "font-mono font-bold",
-                  sm.yesPrice >= 0.7
-                    ? "text-chart-4"
-                    : sm.yesPrice <= 0.3
-                    ? "text-destructive"
-                    : "text-foreground"
-                )}
-              >
-                {(sm.yesPrice * 100).toFixed(0)}%
-              </span>
-            </div>
-          ))}
-          {market.subMarkets.length > 3 && (
-            <span className="text-[10px] text-muted-foreground">
-              +{market.subMarkets.length - 3} more
-            </span>
-          )}
-        </div>
-      ) : market.markets && market.markets.length > 0 ? (
-        <div className="space-y-1 mb-2">
-          {market.markets.slice(0, 2).map((outcome, i) => (
-            <div key={i} className="flex items-center justify-between text-xs">
-              <span className="text-muted-foreground truncate mr-2">
+            )}
+          </>
+        ) : market.markets && market.markets.length > 0 ? (
+          market.markets.slice(0, 2).map((outcome, i) => (
+            <div key={i} className="flex items-center justify-between text-[9px]">
+              <span className="text-muted-foreground truncate mr-1">
                 {outcome.outcome}
               </span>
               <span
                 className={cn(
-                  "font-mono font-bold",
+                  "font-mono font-bold shrink-0",
                   outcome.price >= 0.7
                     ? "text-chart-4"
                     : outcome.price <= 0.3
@@ -150,10 +221,9 @@ function MarketCard({
                 {(outcome.price * 100).toFixed(0)}¢
               </span>
             </div>
-          ))}
-        </div>
-      ) : null}
-
+          ))
+        ) : null}
+      </div>
     </button>
   );
 }

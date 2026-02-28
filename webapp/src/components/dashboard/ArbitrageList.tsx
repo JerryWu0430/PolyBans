@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardAction } from "@/componen
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { useArbitrageStore, useFilteredOpportunities } from "@/lib/stores/arbitrageStore";
 import { ArbitrageCard } from "./ArbitrageCard";
 import { rankOpportunities } from "@/lib/utils/arbitrage";
@@ -130,7 +131,7 @@ export function ArbitrageList() {
         )}
       </CardHeader>
 
-      <CardContent className="flex-1 overflow-auto py-4">
+      <CardContent className="flex-1 py-4">
         {sortedOpportunities.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-center py-8">
             <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center mb-3">
@@ -142,15 +143,17 @@ export function ArbitrageList() {
             </p>
           </div>
         ) : (
-          <div className="space-y-3">
-            {sortedOpportunities.map((opp) => (
-              <ArbitrageCard
-                key={opp.id}
-                opportunity={opp}
-                onRemove={removeOpportunity}
-              />
-            ))}
-          </div>
+          <ScrollArea className="h-full min-h-0">
+            <div className="space-y-3">
+              {sortedOpportunities.map((opp) => (
+                <ArbitrageCard
+                  key={opp.id}
+                  opportunity={opp}
+                  onRemove={removeOpportunity}
+                />
+              ))}
+            </div>
+          </ScrollArea>
         )}
       </CardContent>
     </Card>
