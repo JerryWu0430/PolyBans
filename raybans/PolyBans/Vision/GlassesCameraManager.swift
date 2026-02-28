@@ -1,178 +1,171 @@
-import Foundation
-import UIKit
 import Combine
 import MWDATCamera
 import MWDATCore
+import UIKit
 
 @MainActor
-final class GlassesCameraManager: ObservableObject, CameraSource {
-
-    // MARK: - CameraSource
-
-    nonisolated var onFrameCaptured: ((UIImage) -> Void)?
-
-    // MARK: - Published State
+class GlassesCameraManager: ObservableObject {
+    var onFrameCaptured: ((UIImage) -> Void)?
 
     @Published var isConnected = false
-    @Published var registrationState: RegistrationState = .unavailable
-    @Published var streamState: StreamState = .idle
-    @Published var devices: [WearableDevice] = []
+    @Published var registrationState: RegistrationState
+    @Published var streamState: StreamSessionState = .stopped
+    @Published var devices: [DeviceIdentifier] = []
     @Published var hasActiveDevice = false
     @Published var errorMessage: String?
 
-    // MARK: - DAT SDK
+    private let wearables: WearablesInterface
+    private let deviceSelector: AutoDeviceSelector
+    private var streamSession: StreamSession
 
-    private let wearables = Wearables.shared
-    private var deviceSelector: AutoDeviceSelector?
-    private var streamSession: StreamSession?
-    private var cancellables = Set<AnyCancellable>()
-    private var monitorTask: Task<Void, Never>?
+    private var videoFrameToken: AnyListenerToken?
+    private var stateToken: AnyListenerToken?
+    private var errorToken: AnyListenerToken?
+
     private var registrationTask: Task<Void, Never>?
+    private var devicesTask: Task<Void, Never>?
+    private var deviceMonitorTask: Task<Void, Never>?
 
-    // MARK: - Lifecycle
+    private var frameCount = 0
 
     init() {
-        setupDeviceSelector()
+        let wearables = Wearables.shared
+        self.wearables = wearables
+        self.registrationState = wearables.registrationState
+        self.devices = wearables.devices
+
+        let selector = AutoDeviceSelector(wearables: wearables)
+        self.deviceSelector = selector
+
+        let config = StreamSessionConfig(
+            videoCodec: .raw,
+            resolution: .low,
+            frameRate: 24
+        )
+        self.streamSession = StreamSession(streamSessionConfig: config, deviceSelector: selector)
+
+        deviceMonitorTask = Task { [weak self] in
+            for await device in selector.activeDeviceStream() {
+                guard let self, !Task.isCancelled else { break }
+                let connected = device != nil
+                self.hasActiveDevice = connected
+                self.isConnected = connected
+            }
+        }
+
+        attachListeners()
+
+        registrationTask = Task { [weak self] in
+            guard let self else { return }
+            for await state in wearables.registrationStateStream() {
+                guard !Task.isCancelled else { break }
+                self.registrationState = state
+            }
+        }
+
+        devicesTask = Task { [weak self] in
+            guard let self else { return }
+            for await devices in wearables.devicesStream() {
+                guard !Task.isCancelled else { break }
+                self.devices = devices
+            }
+        }
     }
 
-    deinit {
-        monitorTask?.cancel()
-        registrationTask?.cancel()
-    }
-
-    // MARK: - CameraSource Conformance
+    // MARK: - CameraSource
 
     func start() {
-        requestCameraPermission()
-        startStreaming()
+        if hasActiveDevice {
+            Task {
+                await requestCameraPermissionAndStart()
+            }
+        } else {
+            Task {
+                await streamSession.start()
+            }
+        }
     }
 
     func stop() {
-        stopStreaming()
+        Task {
+            await streamSession.stop()
+        }
     }
 
     // MARK: - Pairing
 
     func pair() {
-        guard registrationState == .available else { return }
-        registrationState = .registering
-        registrationTask = Task {
+        guard registrationState != .registering else { return }
+        Task {
             do {
                 try await wearables.startRegistration()
             } catch {
-                self.errorMessage = "Pairing failed: \(error.localizedDescription)"
-                self.registrationState = .available
+                errorMessage = "Registration failed: \(error)"
             }
         }
     }
 
     func unpair() {
-        guard registrationState == .registered else { return }
-        registrationTask = Task {
+        Task {
             do {
                 try await wearables.startUnregistration()
-                self.registrationState = .available
-                self.isConnected = false
-                self.hasActiveDevice = false
             } catch {
-                self.errorMessage = "Unpairing failed: \(error.localizedDescription)"
+                errorMessage = "Unregistration failed: \(error)"
             }
         }
     }
 
-    // MARK: - Private Setup
+    // MARK: - Private
 
-    private func setupDeviceSelector() {
-        deviceSelector = AutoDeviceSelector(wearables: wearables)
-        monitorRegistrationState()
-        monitorDevices()
-    }
-
-    private func monitorRegistrationState() {
-        monitorTask = Task {
-            for await state in wearables.registrationStateStream {
-                self.registrationState = state
-                if state == .registered {
-                    self.isConnected = true
-                }
-            }
-        }
-    }
-
-    private func monitorDevices() {
-        Task {
-            for await deviceList in wearables.devicesStream {
-                self.devices = deviceList
-                self.hasActiveDevice = !deviceList.isEmpty
-            }
-        }
-    }
-
-    // MARK: - Camera Permission
-
-    private func requestCameraPermission() {
-        Task {
-            let status = await wearables.checkPermissionStatus(.camera)
-            if status != .granted {
-                do {
-                    try await wearables.requestPermission(.camera)
-                } catch {
-                    self.errorMessage = "Camera permission denied: \(error.localizedDescription)"
-                }
-            }
-        }
-    }
-
-    // MARK: - Streaming
-
-    private func startStreaming() {
-        guard streamSession == nil else { return }
-
-        let config = StreamConfiguration(
-            codec: .raw,
-            resolution: .low,
-            frameRate: 24
-        )
-
+    private func requestCameraPermissionAndStart() async {
         do {
-            let session = try wearables.createStreamSession(configuration: config)
-            self.streamSession = session
-
-            session.statePublisher
-                .receive(on: RunLoop.main)
-                .sink { [weak self] state in
-                    self?.streamState = state
+            let status = try await wearables.checkPermissionStatus(.camera)
+            if status != .granted {
+                let result = try await wearables.requestPermission(.camera)
+                guard result == .granted else {
+                    errorMessage = "Camera permission denied"
+                    return
                 }
-                .store(in: &cancellables)
-
-            session.videoFramePublisher
-                .sink { [weak self] frame in
-                    guard let self else { return }
-                    if let image = frame.toUIImage() {
-                        self.onFrameCaptured?(image)
-                    }
-                }
-                .store(in: &cancellables)
-
-            session.start()
+            }
         } catch {
-            self.errorMessage = "Failed to start stream: \(error.localizedDescription)"
+            NSLog("[PolyBans] Permission check failed: %@ — starting anyway", "\(error)")
+        }
+
+        await streamSession.start()
+    }
+
+    private func attachListeners() {
+        frameCount = 0
+
+        videoFrameToken = streamSession.videoFramePublisher.listen { [weak self] videoFrame in
+            let image = videoFrame.makeUIImage()
+            Task { @MainActor [weak self] in
+                guard let self, let image else { return }
+                self.frameCount += 1
+                self.onFrameCaptured?(image)
+            }
+        }
+
+        stateToken = streamSession.statePublisher.listen { [weak self] state in
+            Task { @MainActor [weak self] in
+                guard let self else { return }
+                self.streamState = state
+            }
+        }
+
+        errorToken = streamSession.errorPublisher.listen { [weak self] error in
+            Task { @MainActor [weak self] in
+                guard let self else { return }
+                self.errorMessage = "Stream error: \(error)"
+            }
         }
     }
 
-    private func stopStreaming() {
-        streamSession?.stop()
-        streamSession = nil
-        cancellables.removeAll()
-        streamState = .idle
+    deinit {
+        registrationTask?.cancel()
+        devicesTask?.cancel()
+        deviceMonitorTask?.cancel()
     }
 }
 
-// MARK: - VideoFrame Extension
-
-private extension VideoFrame {
-    func toUIImage() -> UIImage? {
-        guard let cgImage = self.cgImage else { return nil }
-        return UIImage(cgImage: cgImage)
-    }
-}
+extension GlassesCameraManager: CameraSource {}

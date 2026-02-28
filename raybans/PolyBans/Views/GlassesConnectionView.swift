@@ -1,3 +1,4 @@
+import MWDATCore
 import SwiftUI
 
 struct GlassesConnectionView: View {
@@ -54,14 +55,10 @@ struct GlassesConnectionView: View {
             // MARK: Devices
             if !glasses.devices.isEmpty {
                 Section("Devices") {
-                    ForEach(glasses.devices, id: \.identifier) { device in
-                        VStack(alignment: .leading) {
-                            Text(device.name ?? "Unknown Device")
-                                .font(.headline)
-                            Text(device.identifier.uuidString)
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                        }
+                    ForEach(glasses.devices, id: \.self) { deviceId in
+                        Text(deviceId)
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
                     }
                 }
             }
