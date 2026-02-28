@@ -5,7 +5,7 @@ import request from "supertest";
 import { createServer } from "../src/index";
 import { state } from "../src/state";
 import { resetClients } from "../src/ws/handler";
-import { WsFrameMessage, WsHistoryMessage, WsTranscriptMessage } from "../src/types";
+import { WsFrameMessage, WsHistoryMessage, WsTranscriptMessage, WsTtsMessage } from "../src/types";
 
 let server: http.Server;
 let app: ReturnType<typeof createServer>["app"];
@@ -236,6 +236,71 @@ describe("WS /ws/all", () => {
     const health = await request(app).get("/health");
     expect(health.body.frameSubscribers).toBeGreaterThanOrEqual(1);
     expect(health.body.transcriptSubscribers).toBeGreaterThanOrEqual(1);
+  });
+});
+
+describe("WS /ws/tts", () => {
+  it("connects successfully", async () => {
+    const ws = await connectWs("/ws/tts");
+    expect(ws.readyState).toBe(WebSocket.OPEN);
+  });
+
+  it("receives no initial message on connect", async () => {
+    // Even with TTS messages in state, no history is sent on connect
+    await request(app)
+      .post("/ingest/tts")
+      .send({ text: "existing" });
+
+    const { messages } = await connectAndCollect("/ws/tts", 0);
+    await new Promise((r) => setTimeout(r, 100));
+    expect(messages).toHaveLength(0);
+  });
+
+  it("receives broadcast when a TTS message is ingested", async () => {
+    const ws = await connectWs("/ws/tts");
+    const msgPromise = waitForMessage(ws);
+
+    await request(app)
+      .post("/ingest/tts")
+      .send({ text: "speak this" });
+
+    const raw = await msgPromise;
+    const msg: WsTtsMessage = JSON.parse(raw);
+    expect(msg.type).toBe("tts");
+    expect(msg.text).toBe("speak this");
+    expect(msg.id).toHaveLength(8);
+    expect(msg.timestamp).toBeTypeOf("number");
+  });
+
+  it("shows up in health subscriber count", async () => {
+    await connectWs("/ws/tts");
+    await new Promise((r) => setTimeout(r, 50));
+
+    const health = await request(app).get("/health");
+    expect(health.body.ttsSubscribers).toBeGreaterThanOrEqual(1);
+  });
+});
+
+describe("WS /ws/all receives TTS broadcasts", () => {
+  it("receives live TTS broadcasts on /ws/all", async () => {
+    const ws = await connectWs("/ws/all");
+    const msgPromise = waitForMessage(ws);
+
+    await request(app)
+      .post("/ingest/tts")
+      .send({ text: "all-tts" });
+
+    const msg = JSON.parse(await msgPromise);
+    expect(msg.type).toBe("tts");
+    expect(msg.text).toBe("all-tts");
+  });
+
+  it("/ws/all counts in TTS subscriber category", async () => {
+    await connectWs("/ws/all");
+    await new Promise((r) => setTimeout(r, 50));
+
+    const health = await request(app).get("/health");
+    expect(health.body.ttsSubscribers).toBeGreaterThanOrEqual(1);
   });
 });
 

@@ -16,6 +16,7 @@ interface UseRelayStreamReturn {
   connect: () => void;
   disconnect: () => void;
   clearTranscripts: () => void;
+  sendTts: (text: string) => Promise<void>;
 }
 
 export function useRelayStream(options: UseRelayStreamOptions = {}): UseRelayStreamReturn {
@@ -70,6 +71,12 @@ export function useRelayStream(options: UseRelayStreamOptions = {}): UseRelayStr
     setTranscripts([]);
   }, []);
 
+  const sendTts = useCallback(async (text: string) => {
+    if (streamRef.current) {
+      await streamRef.current.sendTts(text);
+    }
+  }, []);
+
   useEffect(() => {
     return () => {
       streamRef.current?.disconnect();
@@ -86,5 +93,6 @@ export function useRelayStream(options: UseRelayStreamOptions = {}): UseRelayStr
     connect,
     disconnect,
     clearTranscripts,
+    sendTts,
   };
 }

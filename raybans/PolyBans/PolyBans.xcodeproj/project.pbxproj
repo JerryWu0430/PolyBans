@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		3B5A6A462F53628F00327BE3 /* MWDATCore in Frameworks */ = {isa = PBXBuildFile; productRef = BB000001BBBB000100000001 /* MWDATCore */; };
+		3B5A6A472F53628F00327BE3 /* MWDATCamera in Frameworks */ = {isa = PBXBuildFile; productRef = BB000001BBBB000100000002 /* MWDATCamera */; };
 		8D7D240E2F534CC100E8C995 /* RelayModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8D7D240D2F534CC100E8C995 /* RelayModels.swift */; };
 		8D7D240F2F534CC100E8C995 /* RelayClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8D7D240C2F534CC100E8C995 /* RelayClient.swift */; };
 		8D7D24112F534CD600E8C995 /* PolyBansSessionViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8D7D24102F534CD600E8C995 /* PolyBansSessionViewModel.swift */; };
@@ -15,6 +17,7 @@
 		AA000001AAAA000100000002 /* FrameThrottler.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA000001AAAA000100000006 /* FrameThrottler.swift */; };
 		AA000001AAAA000100000003 /* GlassesCameraManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA000001AAAA000100000007 /* GlassesCameraManager.swift */; };
 		AA000001AAAA000100000004 /* GlassesConnectionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA000001AAAA000100000008 /* GlassesConnectionView.swift */; };
+		CC000001CCCC000100000001 /* TTSPlayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC000001CCCC000100000002 /* TTSPlayer.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -46,6 +49,7 @@
 		AA000001AAAA000100000006 /* FrameThrottler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FrameThrottler.swift; sourceTree = "<group>"; };
 		AA000001AAAA000100000007 /* GlassesCameraManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlassesCameraManager.swift; sourceTree = "<group>"; };
 		AA000001AAAA000100000008 /* GlassesConnectionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlassesConnectionView.swift; sourceTree = "<group>"; };
+		CC000001CCCC000100000002 /* TTSPlayer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TTSPlayer.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -84,6 +88,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				3B5A6A472F53628F00327BE3 /* MWDATCamera in Frameworks */,
+				3B5A6A462F53628F00327BE3 /* MWDATCore in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -108,6 +114,7 @@
 			isa = PBXGroup;
 			children = (
 				8D7D24122F534D0500E8C995 /* SpeechTranscriber.swift */,
+				CC000001CCCC000100000002 /* TTSPlayer.swift */,
 				8D7D24102F534CD600E8C995 /* PolyBansSessionViewModel.swift */,
 				8D7D240C2F534CC100E8C995 /* RelayClient.swift */,
 				8D7D240D2F534CC100E8C995 /* RelayModels.swift */,
@@ -305,6 +312,7 @@
 				AA000001AAAA000100000002 /* FrameThrottler.swift in Sources */,
 				AA000001AAAA000100000003 /* GlassesCameraManager.swift in Sources */,
 				AA000001AAAA000100000004 /* GlassesConnectionView.swift in Sources */,
+				CC000001CCCC000100000001 /* TTSPlayer.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -346,10 +354,14 @@
 				CODE_SIGN_ENTITLEMENTS = PolyBans/PolyBans.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = CM77Z5GPZW;
+				DEVELOPMENT_TEAM = NFF9669SZR;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = PolyBans/Info.plist;
+				INFOPLIST_KEY_NSBluetoothAlwaysUsageDescription = "PolyBans connects to Meta smart glasses via Bluetooth.";
+				INFOPLIST_KEY_NSCameraUsageDescription = "PolyBans uses the camera to capture video frames for analysis.";
+				INFOPLIST_KEY_NSMicrophoneUsageDescription = "PolyBans needs the microphone to capture live audio for transcription.";
+				INFOPLIST_KEY_NSSpeechRecognitionUsageDescription = "PolyBans transcribes live audio to identify Polymarket betting opportunities.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -360,7 +372,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.PolyBans;
+				PRODUCT_BUNDLE_IDENTIFIER = com.michaeldarlington.PolyBans;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
@@ -380,10 +392,14 @@
 				CODE_SIGN_ENTITLEMENTS = PolyBans/PolyBans.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = CM77Z5GPZW;
+				DEVELOPMENT_TEAM = NFF9669SZR;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = PolyBans/Info.plist;
+				INFOPLIST_KEY_NSBluetoothAlwaysUsageDescription = "PolyBans connects to Meta smart glasses via Bluetooth.";
+				INFOPLIST_KEY_NSCameraUsageDescription = "PolyBans uses the camera to capture video frames for analysis.";
+				INFOPLIST_KEY_NSMicrophoneUsageDescription = "PolyBans needs the microphone to capture live audio for transcription.";
+				INFOPLIST_KEY_NSSpeechRecognitionUsageDescription = "PolyBans transcribes live audio to identify Polymarket betting opportunities.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -394,7 +410,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.PolyBans;
+				PRODUCT_BUNDLE_IDENTIFIER = com.michaeldarlington.PolyBans;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;

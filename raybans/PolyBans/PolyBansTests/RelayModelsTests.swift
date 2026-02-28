@@ -85,7 +85,7 @@ final class RelayModelsTests: XCTestCase {
 
     func testHealthResponseDecodesServerJSON() throws {
         let json = """
-        {"status":"ok","uptimeS":123.456,"framesIngested":10,"transcriptsIngested":5,"frameSubscribers":2,"transcriptSubscribers":1}
+        {"status":"ok","uptimeS":123.456,"framesIngested":10,"transcriptsIngested":5,"frameSubscribers":2,"transcriptSubscribers":1,"ttsSubscribers":3,"ttsIngested":7}
         """.data(using: .utf8)!
 
         let response = try JSONDecoder().decode(HealthResponse.self, from: json)
@@ -95,6 +95,32 @@ final class RelayModelsTests: XCTestCase {
         XCTAssertEqual(response.transcriptsIngested, 5)
         XCTAssertEqual(response.frameSubscribers, 2)
         XCTAssertEqual(response.transcriptSubscribers, 1)
+        XCTAssertEqual(response.ttsSubscribers, 3)
+        XCTAssertEqual(response.ttsIngested, 7)
+    }
+
+    // MARK: - TtsWsMessage
+
+    func testTtsWsMessageDecodesServerJSON() throws {
+        let json = """
+        {"type":"tts","id":"abc12345","text":"Hello from PolyBans","timestamp":1700000000000}
+        """.data(using: .utf8)!
+
+        let msg = try JSONDecoder().decode(TtsWsMessage.self, from: json)
+        XCTAssertEqual(msg.type, "tts")
+        XCTAssertEqual(msg.id, "abc12345")
+        XCTAssertEqual(msg.text, "Hello from PolyBans")
+        XCTAssertEqual(msg.timestamp, 1700000000000)
+    }
+
+    func testTtsWsMessageRoundTrips() throws {
+        let original = TtsWsMessage(type: "tts", id: "round123", text: "round trip", timestamp: 1700000000000)
+        let data = try JSONEncoder().encode(original)
+        let decoded = try JSONDecoder().decode(TtsWsMessage.self, from: data)
+        XCTAssertEqual(decoded.type, original.type)
+        XCTAssertEqual(decoded.id, original.id)
+        XCTAssertEqual(decoded.text, original.text)
+        XCTAssertEqual(decoded.timestamp, original.timestamp)
     }
 
     // MARK: - RelayError

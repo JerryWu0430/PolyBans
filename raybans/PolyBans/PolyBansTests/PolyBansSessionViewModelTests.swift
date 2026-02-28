@@ -152,14 +152,14 @@ final class PolyBansSessionViewModelTests: XCTestCase {
 
     private var healthJSON: Data {
         """
-        {"status":"ok","uptimeS":0,"framesIngested":0,"transcriptsIngested":0,"frameSubscribers":0,"transcriptSubscribers":0}
+        {"status":"ok","uptimeS":0,"framesIngested":0,"transcriptsIngested":0,"frameSubscribers":0,"transcriptSubscribers":0,"ttsSubscribers":0,"ttsIngested":0}
         """.data(using: .utf8)!
     }
 
     private func stubHealthOK() {
         MockURLProtocol.handler = { request in
             let json = """
-            {"status":"ok","uptimeS":0,"framesIngested":0,"transcriptsIngested":0,"frameSubscribers":0,"transcriptSubscribers":0}
+            {"status":"ok","uptimeS":0,"framesIngested":0,"transcriptsIngested":0,"frameSubscribers":0,"transcriptSubscribers":0,"ttsSubscribers":0,"ttsIngested":0}
             """.data(using: .utf8)!
             return (json, MockURLProtocol.response(url: request.url!))
         }
@@ -169,7 +169,7 @@ final class PolyBansSessionViewModelTests: XCTestCase {
         MockURLProtocol.handler = { request in
             if request.url?.path == "/health" {
                 let json = """
-                {"status":"ok","uptimeS":0,"framesIngested":0,"transcriptsIngested":0,"frameSubscribers":0,"transcriptSubscribers":0}
+                {"status":"ok","uptimeS":0,"framesIngested":0,"transcriptsIngested":0,"frameSubscribers":0,"transcriptSubscribers":0,"ttsSubscribers":0,"ttsIngested":0}
                 """.data(using: .utf8)!
                 return (json, MockURLProtocol.response(url: request.url!))
             }

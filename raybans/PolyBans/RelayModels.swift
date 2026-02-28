@@ -36,6 +36,17 @@ struct HealthResponse: Codable {
     let transcriptsIngested: Int
     let frameSubscribers: Int
     let transcriptSubscribers: Int
+    let ttsSubscribers: Int
+    let ttsIngested: Int
+}
+
+// MARK: - TTS
+
+struct TtsWsMessage: Codable {
+    let type: String
+    let id: String
+    let text: String
+    let timestamp: Int
 }
 
 // MARK: - Errors

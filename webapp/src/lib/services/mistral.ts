@@ -249,3 +249,36 @@ Provide strategic analysis. Which outcome has edge? What's undervalued?`,
     return null;
   }
 }
+/**
+ * Describe a camera frame using Pixtral vision model.
+ * Returns a short present-tense scene description (≤20 words).
+ *
+ * @param base64Jpeg - raw base64 JPEG string (no data: prefix needed)
+ */
+export async function describeFrame(base64Jpeg: string): Promise<string> {
+  const response = await client.chat.complete({
+    model: "pixtral-12b-2409",
+    messages: [
+      {
+        role: "user",
+        content: [
+          {
+            type: "image_url",
+            imageUrl: {
+              url: `data:image/jpeg;base64,${base64Jpeg}`,
+            },
+          },
+          {
+            type: "text",
+            text: `Describe what is happening in this image in one short sentence (max 20 words, present tense). Focus on people, locations, activities, or events that might relate to sports, politics, or current affairs. Be specific and direct. No preamble.`,
+          },
+        ],
+      },
+    ],
+    temperature: 0.2,
+  });
+
+  const raw = response.choices?.[0]?.message?.content;
+  if (!raw || typeof raw !== "string") return "";
+  return cleanText(raw).replace(/^["']|["']$/g, ""); // strip surrounding quotes if any
+}

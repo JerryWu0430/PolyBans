@@ -31,7 +31,7 @@ final class RelayClientTests: XCTestCase {
             XCTAssertEqual(request.httpMethod, "GET")
 
             let json = """
-            {"status":"ok","uptimeS":42.0,"framesIngested":3,"transcriptsIngested":1,"frameSubscribers":0,"transcriptSubscribers":0}
+            {"status":"ok","uptimeS":42.0,"framesIngested":3,"transcriptsIngested":1,"frameSubscribers":0,"transcriptSubscribers":0,"ttsSubscribers":0,"ttsIngested":0}
             """.data(using: .utf8)!
             return (json, MockURLProtocol.response(url: request.url!))
         }
@@ -47,7 +47,7 @@ final class RelayClientTests: XCTestCase {
 
         MockURLProtocol.handler = { request in
             let json = """
-            {"status":"ok","uptimeS":0,"framesIngested":0,"transcriptsIngested":0,"frameSubscribers":0,"transcriptSubscribers":0}
+            {"status":"ok","uptimeS":0,"framesIngested":0,"transcriptsIngested":0,"frameSubscribers":0,"transcriptSubscribers":0,"ttsSubscribers":0,"ttsIngested":0}
             """.data(using: .utf8)!
             return (json, MockURLProtocol.response(url: request.url!))
         }

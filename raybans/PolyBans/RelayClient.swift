@@ -14,16 +14,22 @@ actor RelayClient {
     private let frameURL: URL
     private let transcriptURL: URL
     private let healthURL: URL
+    private let ttsWsURL: URL
     private let session: URLSession
     private let encoder = JSONEncoder()
     private let decoder = JSONDecoder()
     let status: RelayConnectionStatus
+
+    private var wsTask: URLSessionWebSocketTask?
+    private var isListening = false
+    var onTtsReceived: ((String) -> Void)?
 
     init(host: String, port: Int = 8420, status: RelayConnectionStatus? = nil) async {
         let base = "http://\(host):\(port)"
         self.frameURL = URL(string: "\(base)/ingest/frame")!
         self.transcriptURL = URL(string: "\(base)/ingest/transcript")!
         self.healthURL = URL(string: "\(base)/health")!
+        self.ttsWsURL = URL(string: "ws://\(host):\(port)/ws/tts")!
         let config = URLSessionConfiguration.default
         config.timeoutIntervalForRequest = 5
         self.session = URLSession(configuration: config)
@@ -41,6 +47,7 @@ actor RelayClient {
         self.frameURL = URL(string: "\(base)/ingest/frame")!
         self.transcriptURL = URL(string: "\(base)/ingest/transcript")!
         self.healthURL = URL(string: "\(base)/health")!
+        self.ttsWsURL = URL(string: "ws://\(host):\(port)/ws/tts")!
         self.session = URLSession(configuration: configuration)
         if let status {
             self.status = status
@@ -109,6 +116,69 @@ actor RelayClient {
 
         await setConnected(true)
         return try decoder.decode(HealthResponse.self, from: data)
+    }
+
+    // MARK: - TTS WebSocket Listener
+
+    func setOnTtsReceived(_ handler: @escaping (String) -> Void) {
+        self.onTtsReceived = handler
+    }
+
+    func startListening() {
+        guard !isListening else { return }
+        isListening = true
+        connectWebSocket()
+    }
+
+    func stopListening() {
+        isListening = false
+        wsTask?.cancel(with: .goingAway, reason: nil)
+        wsTask = nil
+    }
+
+    private func connectWebSocket() {
+        guard isListening else { return }
+        let task = session.webSocketTask(with: ttsWsURL)
+        self.wsTask = task
+        task.resume()
+        receiveMessage(task: task)
+    }
+
+    private func receiveMessage(task: URLSessionWebSocketTask) {
+        task.receive { [weak self] result in
+            guard let self else { return }
+            Task {
+                await self.handleReceive(result: result, task: task)
+            }
+        }
+    }
+
+    private func handleReceive(result: Result<URLSessionWebSocketTask.Message, Error>, task: URLSessionWebSocketTask) {
+        switch result {
+        case .success(let message):
+            switch message {
+            case .string(let text):
+                if let data = text.data(using: .utf8),
+                   let msg = try? decoder.decode(TtsWsMessage.self, from: data) {
+                    onTtsReceived?(msg.text)
+                }
+            case .data(let data):
+                if let msg = try? decoder.decode(TtsWsMessage.self, from: data) {
+                    onTtsReceived?(msg.text)
+                }
+            @unknown default:
+                break
+            }
+            receiveMessage(task: task)
+
+        case .failure:
+            // Auto-reconnect after 2 seconds
+            guard isListening else { return }
+            Task {
+                try? await Task.sleep(nanoseconds: 2_000_000_000)
+                await self.connectWebSocket()
+            }
+        }
     }
 
     // MARK: - Helpers

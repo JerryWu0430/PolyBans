@@ -42,6 +42,13 @@ export interface WsHistoryMessage {
   entries: TranscriptSegment[];
 }
 
+export interface WsTtsMessage {
+  type: "tts";
+  id: string;
+  text: string;
+  timestamp: number;
+}
+
 export interface HealthResponse {
   status: "ok";
   uptimeS: number;
@@ -49,4 +56,6 @@ export interface HealthResponse {
   transcriptsIngested: number;
   frameSubscribers: number;
   transcriptSubscribers: number;
+  ttsSubscribers: number;
+  ttsIngested: number;
 }

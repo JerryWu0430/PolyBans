@@ -6,7 +6,7 @@ import { HealthResponse } from "../types";
 const router = Router();
 
 router.get("/health", (req, res) => {
-  const { frameSubscribers, transcriptSubscribers } = getSubscriberCounts();
+  const { frameSubscribers, transcriptSubscribers, ttsSubscribers } = getSubscriberCounts();
 
   const health: HealthResponse = {
     status: "ok",
@@ -15,6 +15,8 @@ router.get("/health", (req, res) => {
     transcriptsIngested: state.transcriptsIngested,
     frameSubscribers,
     transcriptSubscribers,
+    ttsSubscribers,
+    ttsIngested: state.ttsIngested,
   };
 
   res.json(health);
