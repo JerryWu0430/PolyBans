@@ -27,6 +27,8 @@ class GlassesCameraManager: ObservableObject {
     private var deviceMonitorTask: Task<Void, Never>?
 
     private var frameCount = 0
+    /// Whether start() has been called (so we auto-start stream when device connects)
+    private var wantsStream = false
 
     init() {
         let wearables = Wearables.shared
@@ -50,6 +52,12 @@ class GlassesCameraManager: ObservableObject {
                 let connected = device != nil
                 self.hasActiveDevice = connected
                 self.isConnected = connected
+                NSLog("[PolyBans] Active device changed: connected=%d, wantsStream=%d", connected ? 1 : 0, self.wantsStream ? 1 : 0)
+                // Auto-start stream when device connects and camera was requested
+                if connected && self.wantsStream {
+                    NSLog("[PolyBans] Device connected — requesting camera permission and starting stream")
+                    await self.requestCameraPermissionAndStart()
+                }
             }
         }
 
@@ -59,6 +67,7 @@ class GlassesCameraManager: ObservableObject {
             guard let self else { return }
             for await state in wearables.registrationStateStream() {
                 guard !Task.isCancelled else { break }
+                NSLog("[PolyBans] Registration state: %@", String(describing: state))
                 self.registrationState = state
             }
         }
@@ -67,6 +76,7 @@ class GlassesCameraManager: ObservableObject {
             guard let self else { return }
             for await devices in wearables.devicesStream() {
                 guard !Task.isCancelled else { break }
+                NSLog("[PolyBans] Devices updated: %d", devices.count)
                 self.devices = devices
             }
         }
@@ -75,11 +85,14 @@ class GlassesCameraManager: ObservableObject {
     // MARK: - CameraSource
 
     func start() {
+        wantsStream = true
+        NSLog("[PolyBans] Camera start requested — hasActiveDevice=%d, streamState=%@", hasActiveDevice ? 1 : 0, String(describing: streamState))
         if hasActiveDevice {
             Task {
                 await requestCameraPermissionAndStart()
             }
         } else {
+            NSLog("[PolyBans] No active device yet — stream will auto-start when device connects")
             Task {
                 await streamSession.start()
             }
@@ -87,6 +100,8 @@ class GlassesCameraManager: ObservableObject {
     }
 
     func stop() {
+        wantsStream = false
+        NSLog("[PolyBans] Camera stop requested")
         Task {
             await streamSession.stop()
         }
@@ -118,10 +133,13 @@ class GlassesCameraManager: ObservableObject {
     // MARK: - Private
 
     private func requestCameraPermissionAndStart() async {
+        NSLog("[PolyBans] Checking camera permission…")
         do {
             let status = try await wearables.checkPermissionStatus(.camera)
+            NSLog("[PolyBans] Camera permission status: %@", String(describing: status))
             if status != .granted {
                 let result = try await wearables.requestPermission(.camera)
+                NSLog("[PolyBans] Camera permission request result: %@", String(describing: result))
                 guard result == .granted else {
                     errorMessage = "Camera permission denied"
                     return
@@ -131,7 +149,9 @@ class GlassesCameraManager: ObservableObject {
             NSLog("[PolyBans] Permission check failed: %@ — starting anyway", "\(error)")
         }
 
+        NSLog("[PolyBans] Starting stream session…")
         await streamSession.start()
+        NSLog("[PolyBans] Stream session start returned, state: %@", String(describing: streamState))
     }
 
     private func attachListeners() {
@@ -142,6 +162,9 @@ class GlassesCameraManager: ObservableObject {
             Task { @MainActor [weak self] in
                 guard let self, let image else { return }
                 self.frameCount += 1
+                if self.frameCount <= 3 || self.frameCount % 100 == 0 {
+                    NSLog("[PolyBans] Frame #%d received (%dx%d)", self.frameCount, Int(image.size.width), Int(image.size.height))
+                }
                 self.onFrameCaptured?(image)
             }
         }
@@ -149,6 +172,7 @@ class GlassesCameraManager: ObservableObject {
         stateToken = streamSession.statePublisher.listen { [weak self] state in
             Task { @MainActor [weak self] in
                 guard let self else { return }
+                NSLog("[PolyBans] Stream state changed: %@", String(describing: state))
                 self.streamState = state
             }
         }
@@ -156,6 +180,7 @@ class GlassesCameraManager: ObservableObject {
         errorToken = streamSession.errorPublisher.listen { [weak self] error in
             Task { @MainActor [weak self] in
                 guard let self else { return }
+                NSLog("[PolyBans] Stream error: %@", String(describing: error))
                 self.errorMessage = "Stream error: \(error)"
             }
         }

@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useCallback, useState } from "react";
+import { useEffect, useCallback, useState, useRef } from "react";
 import { useStreamStore } from "@/lib/stores/streamStore";
 import { useArbitrageStore } from "@/lib/stores/arbitrageStore";
 import { useAnalysisPipeline } from "@/lib/hooks/useAnalysisPipeline";
 import { useRelayStream } from "@/lib/hooks/useRelayStream";
+import { useFrameStream } from "@/lib/hooks/useFrameStream";
 import { startMockStream } from "@/lib/mockStream";
 import { VideoFeed } from "@/components/raybans/VideoFeed";
 import { TranscriptOverlay } from "@/components/raybans/TranscriptOverlay";
@@ -34,6 +35,7 @@ export default function RayBansPage() {
     analysis,
     error: pipelineError,
     isProcessing,
+    flushCount,
     sendTranscript,
     reset: resetPipeline,
   } = useAnalysisPipeline();
@@ -44,6 +46,12 @@ export default function RayBansPage() {
     connect: connectRelay,
     disconnect: disconnectRelay,
   } = useRelayStream({ channel: "transcript" });
+
+  const {
+    frameUrl,
+    connect: connectFrames,
+    disconnect: disconnectFrames,
+  } = useFrameStream();
 
   const [isStreaming, setIsStreaming] = useState(false);
   const [useMockStream, setUseMockStream] = useState(true);
@@ -72,18 +80,36 @@ export default function RayBansPage() {
     }
   }, [analysis, setAnalysis]);
 
-  // Relay transcripts → append + send to pipeline
+  // Track previous transcript to extract only new words each 5s
+  const lastTranscriptRef = useRef("");
+
+  // Relay transcripts → append only the NEW words added since last message
   useEffect(() => {
     if (!useMockStream && relayTranscripts.length > 0) {
       const latest = relayTranscripts[relayTranscripts.length - 1];
-      appendTranscript({
-        text: latest.text,
-        timestamp: latest.timestamp,
-        speaker: latest.source,
-      });
-      sendTranscript(latest.text);
+      const prev = lastTranscriptRef.current;
+      lastTranscriptRef.current = latest.text;
+
+      // Strip the already-seen prefix to get only new words
+      let delta = latest.text;
+      if (prev && latest.text.startsWith(prev)) {
+        delta = latest.text.slice(prev.length).trim();
+      }
+
+      if (delta) {
+        appendTranscript({ text: delta, timestamp: latest.timestamp, speaker: latest.source });
+        sendTranscript(delta); // only count new words toward the 600-char buffer
+      }
     }
   }, [useMockStream, relayTranscripts, appendTranscript, sendTranscript]);
+
+  // When buffer hits 600 chars and flushes → clear the transcript list only
+  useEffect(() => {
+    if (flushCount > 0) {
+      reset(); // clear displayed transcript rows — delta ref stays intact
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [flushCount]);
 
   const handleChunk = useCallback(
     (chunk: TranscriptChunk) => {
@@ -98,6 +124,7 @@ export default function RayBansPage() {
       setIsStreaming(false);
       setConnected(false);
       disconnectRelay();
+      disconnectFrames();
       resetPipeline();
     } else {
       setMode("raybans");
@@ -105,6 +132,7 @@ export default function RayBansPage() {
       setIsStreaming(true);
       if (!useMockStream) {
         connectRelay();
+        connectFrames();
       }
     }
   }, [
@@ -141,88 +169,89 @@ export default function RayBansPage() {
 
   return (
     <>
-    <div className="h-full flex flex-col bg-background">
-      {/* Top Status Bar */}
-      <div className="flex items-center justify-between px-4 py-2 border-b border-border/50 bg-card/50">
-        <div className="flex items-center gap-6">
-          {/* Branding */}
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded bg-primary/20 border border-primary/30 flex items-center justify-center">
-              <Glasses className="h-4 w-4 text-primary" />
+      <div className="h-full flex flex-col bg-background">
+        {/* Top Status Bar */}
+        <div className="flex items-center justify-between px-4 py-2 border-b border-border/50 bg-card/50">
+          <div className="flex items-center gap-6">
+            {/* Branding */}
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded bg-primary/20 border border-primary/30 flex items-center justify-center">
+                <Glasses className="h-4 w-4 text-primary" />
+              </div>
+              <div className="flex flex-col">
+                <span className="text-xs font-bold tracking-wider text-primary">POLYBANS</span>
+                <span className="text-[10px] text-muted-foreground font-mono">RAY-BANS MODE</span>
+              </div>
             </div>
-            <div className="flex flex-col">
-              <span className="text-xs font-bold tracking-wider text-primary">POLYBANS</span>
-              <span className="text-[10px] text-muted-foreground font-mono">RAY-BANS MODE</span>
+
+            {/* Connection Status */}
+            <div className="flex items-center gap-4 text-xs font-mono">
+              <div className={`flex items-center gap-1.5 ${isLiveConnected ? "text-chart-4" : "text-muted-foreground"}`}>
+                <div className={`w-1.5 h-1.5 rounded-full ${isLiveConnected ? "bg-chart-4 animate-pulse" : "bg-muted-foreground/50"}`} />
+                <span>{isProcessing ? "ANALYZING" : isStreaming ? "STREAMING" : "IDLE"}</span>
+              </div>
+              <div className="text-muted-foreground">
+                BUFFER: <span className={buffering ? "text-chart-2" : "text-muted-foreground/50"}>{buffering?.chars ?? 0}/{buffering?.threshold ?? 600}</span>
+              </div>
             </div>
           </div>
 
-          {/* Connection Status */}
-          <div className="flex items-center gap-4 text-xs font-mono">
-            <div className={`flex items-center gap-1.5 ${isLiveConnected ? "text-chart-4" : "text-muted-foreground"}`}>
-              <div className={`w-1.5 h-1.5 rounded-full ${isLiveConnected ? "bg-chart-4 animate-pulse" : "bg-muted-foreground/50"}`} />
-              <span>{isProcessing ? "ANALYZING" : isStreaming ? "STREAMING" : "IDLE"}</span>
-            </div>
-            <div className="text-muted-foreground">
-              BUFFER: <span className={buffering ? "text-chart-2" : "text-muted-foreground/50"}>{buffering?.chars ?? 0}/{buffering?.threshold ?? 600}</span>
-            </div>
+          {/* Right side - clock */}
+          <div className="flex items-center gap-1.5 text-xs font-mono text-muted-foreground">
+            <Clock className="h-3 w-3" />
+            <span suppressHydrationWarning>{currentTime.toLocaleTimeString("en-US", { hour12: false })}</span>
           </div>
         </div>
 
-        {/* Right side - clock */}
-        <div className="flex items-center gap-1.5 text-xs font-mono text-muted-foreground">
-          <Clock className="h-3 w-3" />
-          <span suppressHydrationWarning>{currentTime.toLocaleTimeString("en-US", { hour12: false })}</span>
-        </div>
-      </div>
+        {/* Error Banner */}
+        {pipelineError && (
+          <div className="px-4 py-2 bg-destructive/10 border-b border-destructive/30 text-destructive text-xs font-mono flex items-center gap-2">
+            <Zap className="h-3 w-3" />
+            ERROR: {pipelineError}
+          </div>
+        )}
 
-      {/* Error Banner */}
-      {pipelineError && (
-        <div className="px-4 py-2 bg-destructive/10 border-b border-destructive/30 text-destructive text-xs font-mono flex items-center gap-2">
-          <Zap className="h-3 w-3" />
-          ERROR: {pipelineError}
-        </div>
-      )}
+        {/* Main Content Area */}
+        <div className="flex-1 flex min-h-0">
+          {/* Left: Video Feed with Overlay */}
+          <div className="flex-1 flex flex-col min-h-0">
+            {/* Video + Transcript Overlay */}
+            <div className="flex-1 relative min-h-0">
+              <VideoFeed
+                frameUrl={!useMockStream ? frameUrl ?? undefined : undefined}
+                isConnected={isLiveConnected}
+                isMock={useMockStream}
+                className="absolute inset-0 rounded-none border-0"
+              />
+              <TranscriptOverlay
+                chunks={transcript}
+                bufferPercent={bufferPercent}
+                isStreaming={isStreaming}
+              />
+            </div>
 
-      {/* Main Content Area */}
-      <div className="flex-1 flex min-h-0">
-        {/* Left: Video Feed with Overlay */}
-        <div className="flex-1 flex flex-col min-h-0">
-          {/* Video + Transcript Overlay */}
-          <div className="flex-1 relative min-h-0">
-            <VideoFeed
-              isConnected={isLiveConnected}
-              isMock={useMockStream}
-              className="absolute inset-0 rounded-none border-0"
-            />
-            <TranscriptOverlay
-              chunks={transcript}
-              bufferPercent={bufferPercent}
+            {/* Control Bar */}
+            <VideoControlBar
               isStreaming={isStreaming}
+              useMockStream={useMockStream}
+              connectionState={connectionState}
+              bufferChars={buffering?.chars}
+              bufferThreshold={buffering?.threshold}
+              onToggleStream={toggleStream}
+              onToggleMock={() => setUseMockStream(!useMockStream)}
             />
           </div>
 
-          {/* Control Bar */}
-          <VideoControlBar
+          {/* Right: Markets Sidebar */}
+          <MarketsSidebar
+            markets={streamedMarkets}
             isStreaming={isStreaming}
-            useMockStream={useMockStream}
-            connectionState={connectionState}
-            bufferChars={buffering?.chars}
-            bufferThreshold={buffering?.threshold}
-            onToggleStream={toggleStream}
-            onToggleMock={() => setUseMockStream(!useMockStream)}
           />
         </div>
-
-        {/* Right: Markets Sidebar */}
-        <MarketsSidebar
-          markets={streamedMarkets}
-          isStreaming={isStreaming}
-        />
       </div>
-    </div>
 
-    {/* Modal rendered outside page container for proper centering */}
-    <MarketOrderModal />
+      {/* Modal rendered outside page container for proper centering */}
+      <MarketOrderModal />
     </>
   );
 }

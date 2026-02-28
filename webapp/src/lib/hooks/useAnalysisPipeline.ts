@@ -21,6 +21,7 @@ interface UseAnalysisPipelineReturn {
   markets: PolymarketMarket[];
   error: string | null;
   isProcessing: boolean;
+  flushCount: number;
   sendTranscript: (text: string) => void;
   reset: () => void;
 }
@@ -32,6 +33,7 @@ export function useAnalysisPipeline(): UseAnalysisPipelineReturn {
   const [markets, setMarkets] = useState<PolymarketMarket[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [flushCount, setFlushCount] = useState(0);
 
   const { setStreamedMarkets, setLatestAnalysis, setBuffering: setStoreBuffering } = useArbitrageStore();
 
@@ -81,6 +83,11 @@ export function useAnalysisPipeline(): UseAnalysisPipelineReturn {
 
     if (ready) {
       const transcript = buffer.flush();
+      // Reset display immediately after flush so UI shows 0/600
+      const resetState = { chars: buffer.length, threshold: MIN_CHARS_TO_PROCESS };
+      setBuffering(resetState);
+      setStoreBuffering(resetState);
+      setFlushCount((n) => n + 1); // signal page to clear transcript list
       processAnalysis(transcript);
     }
   }, [processAnalysis, setStoreBuffering]);
@@ -101,6 +108,7 @@ export function useAnalysisPipeline(): UseAnalysisPipelineReturn {
     markets,
     error,
     isProcessing,
+    flushCount,
     sendTranscript,
     reset,
   };

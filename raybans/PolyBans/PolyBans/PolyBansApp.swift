@@ -16,7 +16,7 @@ struct PolyBansApp: App {
 
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            ContentView(vm: vm)
                 .onOpenURL { url in
                     guard
                         let components = URLComponents(url: url, resolvingAgainstBaseURL: false),
