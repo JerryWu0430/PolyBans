@@ -3,8 +3,9 @@
 import { useEffect, useCallback, useState } from "react";
 import { useStreamStore } from "@/lib/stores/streamStore";
 import { useArbitrageStore } from "@/lib/stores/arbitrageStore";
+import { usePolymarketStream } from "@/lib/hooks/usePolymarketStream";
+import { useRelayStream } from "@/lib/hooks/useRelayStream";
 import { startMockStream } from "@/lib/mockStream";
-import { analyzeTranscript } from "@/lib/services/mistral";
 import {
   VideoFeed,
   TranscriptPanel,
@@ -14,11 +15,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import type { TranscriptChunk } from "@/lib/types/stream";
-
-// How many characters to accumulate before triggering analysis
-const ANALYSIS_CHAR_THRESHOLD = 300;
-// Minimum interval between analyses (ms)
-const ANALYSIS_INTERVAL = 30000;
 
 export default function RayBansPage() {
   const {
@@ -32,88 +28,122 @@ export default function RayBansPage() {
     reset,
   } = useStreamStore();
 
-  const { opportunities, addOpportunity, clearOpportunities } =
-    useArbitrageStore();
+  const {
+    opportunities,
+    addOpportunity,
+    clearOpportunities,
+    setStreamedMarkets,
+    setLatestAnalysis,
+    setBuffering,
+    streamedMarkets,
+  } = useArbitrageStore();
+
+  // Polymarket WS stream (for analysis results)
+  const {
+    state: polymarketState,
+    analysis,
+    markets,
+    buffering,
+    error: polymarketError,
+    connect: connectPolymarket,
+    disconnect: disconnectPolymarket,
+  } = usePolymarketStream();
+
+  // Relay WS stream (for raw transcript)
+  const {
+    state: relayState,
+    transcripts: relayTranscripts,
+    connect: connectRelay,
+    disconnect: disconnectRelay,
+  } = useRelayStream({ channel: "transcript" });
 
   const [isStreaming, setIsStreaming] = useState(false);
-  const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [lastAnalysisTime, setLastAnalysisTime] = useState(0);
-  const [charsSinceAnalysis, setCharsSinceAnalysis] = useState(0);
+  const [useMockStream, setUseMockStream] = useState(true);
 
-  // Handle transcript chunk arrival
+  // Sync polymarket stream results to store
+  useEffect(() => {
+    if (analysis) {
+      setLatestAnalysis(analysis);
+      // Map analysis to existing format for AnalysisOverlay
+      if (analysis.detected) {
+        setAnalysis({
+          confidence: 0.8,
+          sentiment: "neutral",
+          summary: analysis.reason,
+          suggestedQueries: analysis.queries,
+          entities: analysis.queries.map((q) => ({
+            name: q,
+            type: "other" as const,
+            relevance: 0.8,
+          })),
+        });
+      }
+    }
+  }, [analysis, setAnalysis, setLatestAnalysis]);
+
+  useEffect(() => {
+    if (markets && markets.length > 0) {
+      setStreamedMarkets(markets);
+    }
+  }, [markets, setStreamedMarkets]);
+
+  useEffect(() => {
+    setBuffering(buffering);
+  }, [buffering, setBuffering]);
+
+  // Sync relay transcript to store (when not using mock)
+  useEffect(() => {
+    if (!useMockStream && relayTranscripts.length > 0) {
+      const latest = relayTranscripts[relayTranscripts.length - 1];
+      appendTranscript({
+        text: latest.text,
+        timestamp: latest.timestamp,
+        speaker: latest.source,
+      });
+    }
+  }, [useMockStream, relayTranscripts, appendTranscript]);
+
+  // Handle mock transcript chunk
   const handleChunk = useCallback(
     (chunk: TranscriptChunk) => {
       appendTranscript(chunk);
-      setCharsSinceAnalysis((prev) => prev + chunk.text.length);
     },
     [appendTranscript]
   );
 
-  const runAnalysis = useCallback(async () => {
-    if (isAnalyzing) return;
-
-    setIsAnalyzing(true);
-    setCharsSinceAnalysis(0);
-    setLastAnalysisTime(Date.now());
-
-    try {
-      // Get recent transcript text
-      const recentText = transcript
-        .slice(-20)
-        .map((c) => c.text)
-        .join(" ");
-
-      const result = await analyzeTranscript(recentText);
-      setAnalysis(result);
-
-      // If high confidence, create mock arbitrage opportunity
-      if (result.confidence >= 0.6 && result.entities.length > 0) {
-        const mockOpp = createMockOpportunity(result);
-        if (mockOpp) {
-          addOpportunity(mockOpp);
-        }
-      }
-    } catch (error) {
-      console.error("Analysis failed:", error);
-    } finally {
-      setIsAnalyzing(false);
-    }
-  }, [isAnalyzing, transcript, setAnalysis, addOpportunity]);
-
-  // Trigger analysis when threshold reached
-  useEffect(() => {
-    const now = Date.now();
-    const timeSinceLastAnalysis = now - lastAnalysisTime;
-
-    if (
-      charsSinceAnalysis >= ANALYSIS_CHAR_THRESHOLD &&
-      timeSinceLastAnalysis >= ANALYSIS_INTERVAL &&
-      !isAnalyzing &&
-      transcript.length > 0
-    ) {
-      runAnalysis();
-    }
-  }, [charsSinceAnalysis, lastAnalysisTime, isAnalyzing, transcript.length, runAnalysis]);
-
-  // Start/stop mock stream
+  // Toggle stream
   const toggleStream = useCallback(() => {
     if (isStreaming) {
       setIsStreaming(false);
       setConnected(false);
+      disconnectPolymarket();
+      disconnectRelay();
     } else {
       setMode("raybans");
       setConnected(true);
       setIsStreaming(true);
+      connectPolymarket();
+      if (!useMockStream) {
+        connectRelay();
+      }
     }
-  }, [isStreaming, setConnected, setMode]);
+  }, [
+    isStreaming,
+    useMockStream,
+    setConnected,
+    setMode,
+    connectPolymarket,
+    disconnectPolymarket,
+    connectRelay,
+    disconnectRelay,
+  ]);
 
   // Mock stream effect
   useEffect(() => {
-    if (!isStreaming) return;
-
+    if (!isStreaming || !useMockStream) return;
     const cleanup = startMockStream(handleChunk);
     return cleanup;
-  }, [isStreaming, handleChunk]);
+  }, [isStreaming, useMockStream, handleChunk]);
 
   // Cleanup on unmount
   useEffect(() => {
@@ -124,9 +154,11 @@ export default function RayBansPage() {
   }, [reset, clearOpportunities]);
 
   const handleQueryClick = (query: string) => {
-    // TODO: Open Polymarket search with query
-    console.log("Search Polymarket:", query);
+    window.open(`https://polymarket.com/markets?_q=${encodeURIComponent(query)}`, "_blank");
   };
+
+  const isLiveConnected =
+    polymarketState === "connected" || relayState === "connected";
 
   return (
     <div className="space-y-4 h-full">
@@ -135,28 +167,53 @@ export default function RayBansPage() {
         <div className="flex items-center gap-3">
           <h1 className="text-2xl font-bold">Ray-Bans Mode</h1>
           <Badge variant="outline">OpenGlass Integration</Badge>
+          {isStreaming && (
+            <Badge
+              variant={isLiveConnected ? "default" : "secondary"}
+              className="text-xs"
+            >
+              {polymarketState === "connected" ? "🟢 Live" : "🟡 Connecting"}
+            </Badge>
+          )}
         </div>
         <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setUseMockStream(!useMockStream)}
+            disabled={isStreaming}
+          >
+            {useMockStream ? "Mock" : "Live"}
+          </Button>
           <Button
             variant={isStreaming ? "destructive" : "default"}
             onClick={toggleStream}
           >
-            {isStreaming ? "Stop Stream" : "Start Mock Stream"}
+            {isStreaming ? "Stop Stream" : "Start Stream"}
           </Button>
-          {isStreaming && (
-            <Button variant="outline" onClick={runAnalysis} disabled={isAnalyzing}>
-              {isAnalyzing ? "Analyzing..." : "Force Analysis"}
-            </Button>
-          )}
         </div>
       </div>
+
+      {/* Error display */}
+      {polymarketError && (
+        <div className="text-sm text-red-500 bg-red-500/10 p-2 rounded">
+          Stream error: {polymarketError}
+        </div>
+      )}
+
+      {/* Buffering indicator */}
+      {buffering && (
+        <div className="text-sm text-muted-foreground">
+          Buffering: {buffering.chars}/{buffering.threshold} chars
+        </div>
+      )}
 
       {/* Main Grid Layout */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* Video Feed */}
         <VideoFeed
           isConnected={isConnected}
-          isMock={true}
+          isMock={useMockStream}
           className="h-[280px]"
         />
 
@@ -167,47 +224,59 @@ export default function RayBansPage() {
       {/* Analysis Overlay */}
       <AnalysisOverlay
         analysis={currentAnalysis}
-        isLoading={isAnalyzing}
+        isLoading={buffering !== null}
         onQueryClick={handleQueryClick}
       />
 
       {/* Arbitrage List */}
       <ArbitrageList opportunities={opportunities} />
+
+      {/* Streamed Markets from WS */}
+      {streamedMarkets.length > 0 && (
+        <div className="space-y-2">
+          <h2 className="text-lg font-semibold">Live Markets</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+            {streamedMarkets.map((market) => (
+              <div
+                key={market.id}
+                className="p-3 border rounded-lg space-y-2 hover:shadow-sm transition-shadow"
+              >
+                <div className="flex gap-2">
+                  {market.image && (
+                    <img
+                      src={market.image}
+                      alt=""
+                      className="w-8 h-8 rounded object-cover"
+                    />
+                  )}
+                  <p className="text-sm font-medium line-clamp-2">
+                    {market.question || market.title}
+                  </p>
+                </div>
+                {market.sparkline?.length > 1 && (
+                  <div className="h-6 flex items-end gap-px">
+                    {market.sparkline.slice(-20).map((v, i) => (
+                      <div
+                        key={i}
+                        className="flex-1 bg-primary/60 rounded-t"
+                        style={{ height: `${v * 100}%` }}
+                      />
+                    ))}
+                  </div>
+                )}
+                <a
+                  href={`https://polymarket.com/event/${market.slug}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-xs text-primary hover:underline"
+                >
+                  View on Polymarket →
+                </a>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
-}
-
-// Helper to create mock arbitrage opportunity from analysis
-function createMockOpportunity(analysis: ReturnType<typeof useStreamStore.getState>["currentAnalysis"]) {
-  if (!analysis) return null;
-
-  const entity = analysis.entities[0];
-  const id = `opp-${Date.now()}`;
-
-  return {
-    id,
-    marketA: {
-      id: `market-a-${id}`,
-      question: `Will ${entity?.name || "Event"} outcome be positive?`,
-      slug: `market-a-${id}`,
-      endDate: new Date(Date.now() + 86400000).toISOString(),
-      liquidity: "10000",
-      volume: "5000",
-      outcomes: ["Yes", "No"],
-      outcomePrices: ["0.55", "0.45"],
-    },
-    marketB: {
-      id: `market-b-${id}`,
-      question: `${entity?.name || "Event"} to ${analysis.sentiment === "bullish" ? "succeed" : "decline"}?`,
-      slug: `market-b-${id}`,
-      endDate: new Date(Date.now() + 86400000).toISOString(),
-      liquidity: "8000",
-      volume: "4000",
-      outcomes: ["Yes", "No"],
-      outcomePrices: ["0.48", "0.52"],
-    },
-    spread: 0.07 + Math.random() * 0.08,
-    confidence: analysis.confidence,
-    timestamp: Date.now(),
-  };
 }

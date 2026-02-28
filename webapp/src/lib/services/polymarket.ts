@@ -6,6 +6,7 @@ import type {
 } from "@/lib/types";
 
 const GAMMA_API_URL = "https://gamma-api.polymarket.com";
+const CLOB_API_URL = "https://clob.polymarket.com";
 const CLOB_WS_URL = "wss://ws-subscriptions-clob.polymarket.com/ws/market";
 
 export async function getMarkets(
@@ -133,4 +134,25 @@ function mapGammaMarket(data: Record<string, unknown>): Market {
     slug: data.slug ? String(data.slug) : undefined,
     active: data.active !== false,
   };
+}
+
+/**
+ * Fetch price history (sparkline) for a CLOB token.
+ * Returns array of prices over time.
+ */
+export async function getSparkline(clobTokenId: string): Promise<number[]> {
+  if (!clobTokenId) return [];
+  try {
+    const res = await fetch(
+      `${CLOB_API_URL}/prices-history?interval=max&market=${clobTokenId}`
+    );
+    if (!res.ok) return [];
+    const data = await res.json();
+    if (data?.history && Array.isArray(data.history)) {
+      return data.history.map((h: { p: number }) => h.p);
+    }
+    return [];
+  } catch {
+    return [];
+  }
 }
