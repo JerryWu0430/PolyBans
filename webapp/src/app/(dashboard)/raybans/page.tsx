@@ -7,11 +7,13 @@ import { useAnalysisPipeline } from "@/lib/hooks/useAnalysisPipeline";
 import { useRelayStream } from "@/lib/hooks/useRelayStream";
 import { useFrameStream } from "@/lib/hooks/useFrameStream";
 import { startMockStream } from "@/lib/mockStream";
+import { useTradeConfirmation } from "@/lib/hooks/useTradeConfirmation";
 import { VideoFeed } from "@/components/raybans/VideoFeed";
 import { TranscriptOverlay } from "@/components/raybans/TranscriptOverlay";
 import { MarketsSidebar } from "@/components/raybans/MarketsSidebar";
 import { VideoControlBar } from "@/components/raybans/VideoControlBar";
 import { MarketOrderModal } from "@/components/raybans/MarketOrderModal";
+import { TradeConfirmationBanner } from "@/components/raybans/TradeConfirmationBanner";
 import { Glasses, Clock, Zap, Volume2 } from "lucide-react";
 import type { TranscriptChunk } from "@/lib/types/stream";
 
@@ -33,6 +35,7 @@ export default function RayBansPage() {
   const {
     buffering,
     analysis,
+    markets,
     error: pipelineError,
     isProcessing,
     flushCount,
@@ -53,6 +56,8 @@ export default function RayBansPage() {
     connect: connectFrames,
     disconnect: disconnectFrames,
   } = useFrameStream();
+
+  const tradeConfirmation = useTradeConfirmation({ sendTts });
 
   const [isStreaming, setIsStreaming] = useState(false);
   const [useMockStream, setUseMockStream] = useState(true);
@@ -83,6 +88,14 @@ export default function RayBansPage() {
     }
   }, [analysis, setAnalysis]);
 
+  // Trigger trade confirmation when new markets arrive
+  useEffect(() => {
+    if (markets.length > 0) {
+      tradeConfirmation.handleNewMarkets(markets);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [markets]);
+
   // Track previous transcript to extract only new words each 5s
   const lastTranscriptRef = useRef("");
 
@@ -101,7 +114,10 @@ export default function RayBansPage() {
 
       if (delta) {
         appendTranscript({ text: delta, timestamp: latest.timestamp, speaker: latest.source });
-        sendTranscript(delta); // only count new words toward the 600-char buffer
+        const consumed = tradeConfirmation.interceptTranscript(delta);
+        if (!consumed) {
+          sendTranscript(delta); // only count new words toward the 600-char buffer
+        }
       }
     }
   }, [useMockStream, relayTranscripts, appendTranscript, sendTranscript]);
@@ -232,6 +248,18 @@ export default function RayBansPage() {
                 isStreaming={isStreaming}
               />
             </div>
+
+            {/* Trade Confirmation Banner */}
+            {tradeConfirmation.confirmationState !== "idle" && (
+              <TradeConfirmationBanner
+                state={tradeConfirmation.confirmationState}
+                market={tradeConfirmation.pendingMarket}
+                subMarket={tradeConfirmation.pendingSubMarket}
+                timeoutProgress={tradeConfirmation.timeoutProgress}
+                lastTradeResult={tradeConfirmation.lastTradeResult}
+                onCancel={tradeConfirmation.manualCancel}
+              />
+            )}
 
             {/* Control Bar */}
             <VideoControlBar
