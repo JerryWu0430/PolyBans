@@ -27,9 +27,11 @@ if (require.main === module) {
   const PORT = parseInt(process.env.PORT || "8420", 10);
   const { server } = createServer();
 
-  const POLYMARKET_WS_URL =
-    process.env.POLYMARKET_WS_URL || "ws://localhost:3001/api/stream";
-  initPolymarketForwarder(POLYMARKET_WS_URL);
+  // Only init forwarder if explicitly set (webapp now handles analysis directly)
+  const POLYMARKET_WS_URL = process.env.POLYMARKET_WS_URL;
+  if (POLYMARKET_WS_URL) {
+    initPolymarketForwarder(POLYMARKET_WS_URL);
+  }
 
   server.listen(PORT, () => {
     console.log(`Relay server listening on port ${PORT}`);
@@ -37,6 +39,8 @@ if (require.main === module) {
     console.log(`  WS:    ws://localhost:${PORT}/ws/frames`);
     console.log(`  WS:    ws://localhost:${PORT}/ws/transcript`);
     console.log(`  WS:    ws://localhost:${PORT}/ws/all`);
-    console.log(`  FWD:   ${POLYMARKET_WS_URL}`);
+    if (POLYMARKET_WS_URL) {
+      console.log(`  FWD:   ${POLYMARKET_WS_URL}`);
+    }
   });
 }

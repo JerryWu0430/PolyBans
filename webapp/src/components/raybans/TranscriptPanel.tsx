@@ -1,22 +1,16 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import { MessageSquare, Clock } from "lucide-react";
 import type { TranscriptChunk } from "@/lib/types/stream";
 
-// Keywords to highlight (teams, candidates, scores, etc.)
 const HIGHLIGHT_KEYWORDS = [
-  // Sports teams
   "Lakers", "Warriors", "Chiefs", "Eagles", "Dodgers", "Celtics",
   "Real Madrid", "Manchester City", "Barcelona",
-  // Players
   "LeBron", "Curry", "Mahomes", "Ohtani", "Mbappe", "Haaland",
-  // Political terms
   "election", "polls", "vote", "campaign", "candidate", "Congress",
   "Senate", "House", "president", "Supreme Court",
-  // Numbers/scores
   /\d+\s*-\s*\d+/, /\d+%/, /\d+\s*point/,
 ];
 
@@ -35,7 +29,6 @@ export function TranscriptPanel({
 }: TranscriptPanelProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  // Auto-scroll to bottom when new chunks arrive
   useEffect(() => {
     if (autoScroll && scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
@@ -45,60 +38,108 @@ export function TranscriptPanel({
   const displayChunks = chunks.slice(-maxChunks);
 
   return (
-    <Card className={cn("flex flex-col", className)}>
-      <CardHeader className="pb-2 flex-shrink-0">
-        <div className="flex items-center justify-between">
-          <CardTitle className="text-sm font-medium">Transcript</CardTitle>
-          <Badge variant="secondary" className="text-xs">
-            {chunks.length} chunks
-          </Badge>
+    <div
+      className={cn(
+        "relative flex flex-col rounded-xl border border-border/50 bg-card overflow-hidden",
+        className
+      )}
+    >
+      {/* Header bar */}
+      <div className="flex items-center justify-between px-4 py-2.5 border-b border-border/50 bg-muted/30">
+        <div className="flex items-center gap-2">
+          <MessageSquare className="h-4 w-4 text-muted-foreground" />
+          <span className="text-sm font-medium">Transcript</span>
         </div>
-      </CardHeader>
-      <CardContent className="flex-1 overflow-hidden p-2">
-        <div
-          ref={scrollRef}
-          className="h-full overflow-y-auto space-y-2 pr-2 scrollbar-thin"
-        >
-          {displayChunks.length === 0 ? (
-            <div className="flex items-center justify-center h-full text-muted-foreground text-sm">
-              Waiting for transcript...
+        <div className="flex items-center gap-2">
+          <span className="px-2 py-0.5 rounded text-xs font-mono bg-muted text-muted-foreground tabular-nums">
+            {chunks.length}
+          </span>
+        </div>
+      </div>
+
+      {/* Transcript content */}
+      <div
+        ref={scrollRef}
+        className="flex-1 overflow-y-auto scrollbar-terminal p-3 space-y-1"
+      >
+        {displayChunks.length === 0 ? (
+          <div className="flex flex-col items-center justify-center h-full py-8">
+            <div className="w-12 h-12 rounded-xl bg-muted/50 border border-border/50 flex items-center justify-center mb-3">
+              <MessageSquare className="h-5 w-5 text-muted-foreground/50" />
             </div>
-          ) : (
-            displayChunks.map((chunk, idx) => (
-              <TranscriptChunkItem
-                key={`${chunk.timestamp}-${idx}`}
-                chunk={chunk}
-              />
-            ))
-          )}
-        </div>
-      </CardContent>
-    </Card>
+            <p className="text-sm text-muted-foreground">Awaiting transcript</p>
+            <p className="text-xs text-muted-foreground/60 mt-0.5">
+              Speech will appear here
+            </p>
+          </div>
+        ) : (
+          displayChunks.map((chunk, idx) => (
+            <TranscriptChunkItem
+              key={`${chunk.timestamp}-${idx}`}
+              chunk={chunk}
+              isLatest={idx === displayChunks.length - 1}
+            />
+          ))
+        )}
+      </div>
+
+      {/* Bottom gradient fade */}
+      <div className="absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-card to-transparent pointer-events-none" />
+    </div>
   );
 }
 
-function TranscriptChunkItem({ chunk }: { chunk: TranscriptChunk }) {
-  const timestamp = new Date(chunk.timestamp).toLocaleTimeString();
+function TranscriptChunkItem({
+  chunk,
+  isLatest,
+}: {
+  chunk: TranscriptChunk;
+  isLatest?: boolean;
+}) {
+  const timestamp = new Date(chunk.timestamp).toLocaleTimeString("en-US", {
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: false,
+  });
   const highlightedText = highlightKeywords(chunk.text);
 
   return (
-    <div className="group rounded-lg bg-muted/50 p-2 hover:bg-muted transition-colors">
-      <div className="flex items-start gap-2">
-        <span className="text-[10px] text-muted-foreground font-mono shrink-0 pt-0.5">
+    <div
+      className={cn(
+        "group flex gap-3 px-3 py-2 rounded-lg transition-colors",
+        isLatest
+          ? "bg-primary/5 border border-primary/10"
+          : "hover:bg-muted/50"
+      )}
+    >
+      {/* Timestamp */}
+      <div className="flex items-center gap-1 shrink-0 pt-0.5">
+        <Clock className="h-3 w-3 text-muted-foreground/50" />
+        <span className="text-[10px] font-mono text-muted-foreground/70 tabular-nums">
           {timestamp}
         </span>
-        <div className="flex-1 min-w-0">
-          {chunk.speaker && (
-            <span className="text-xs font-medium text-primary mr-1.5">
-              {chunk.speaker}:
-            </span>
-          )}
-          <span
-            className="text-sm leading-relaxed"
-            dangerouslySetInnerHTML={{ __html: highlightedText }}
-          />
-        </div>
       </div>
+
+      {/* Content */}
+      <div className="flex-1 min-w-0">
+        {chunk.speaker && (
+          <span className="text-xs font-semibold text-primary mr-1.5">
+            {chunk.speaker}:
+          </span>
+        )}
+        <span
+          className="text-sm leading-relaxed"
+          dangerouslySetInnerHTML={{ __html: highlightedText }}
+        />
+      </div>
+
+      {/* Live indicator for latest */}
+      {isLatest && (
+        <div className="shrink-0 pt-1">
+          <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse-live" />
+        </div>
+      )}
     </div>
   );
 }
@@ -110,13 +151,14 @@ function highlightKeywords(text: string): string {
     if (keyword instanceof RegExp) {
       result = result.replace(
         keyword,
-        (match) => `<mark class="bg-yellow-200/50 dark:bg-yellow-900/50 px-0.5 rounded">${match}</mark>`
+        (match) =>
+          `<mark class="bg-accent/60 text-accent-foreground px-1 py-0.5 rounded font-medium">${match}</mark>`
       );
     } else {
       const regex = new RegExp(`\\b(${keyword})\\b`, "gi");
       result = result.replace(
         regex,
-        `<mark class="bg-yellow-200/50 dark:bg-yellow-900/50 px-0.5 rounded">$1</mark>`
+        `<mark class="bg-accent/60 text-accent-foreground px-1 py-0.5 rounded font-medium">$1</mark>`
       );
     }
   }

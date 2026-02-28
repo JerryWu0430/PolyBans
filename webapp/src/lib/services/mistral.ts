@@ -1,81 +1,116 @@
+/**
+ * mistral.ts — Mistral AI structured output service.
+ *
+ * Uses Mistral's JSON mode to extract prediction-market signals
+ * from live transcript chunks.
+ */
+
 import { Mistral } from "@mistralai/mistralai";
-import type { AnalysisContext, AnalysisResult } from "@/lib/types";
 
-const SYSTEM_PROMPT = `You are an arbitrage analysis assistant for Polymarket prediction markets.
-Your job is to analyze transcripts (from podcasts, news, speeches) and extract:
-1. Entities: teams, candidates, events, companies that could be bet on
-2. Suggested Polymarket search queries
-3. Overall sentiment (bullish/bearish/neutral) with confidence
+const client = new Mistral({ apiKey: process.env.MISTRAL_API_KEY });
 
-Respond in JSON format:
-{
-  "sentiment": "bullish" | "bearish" | "neutral",
-  "confidence": 0.0-1.0,
-  "summary": "Brief analysis",
-  "entities": [{"name": "...", "type": "team|candidate|event|company|other", "relevance": 0.0-1.0}],
-  "suggestedQueries": ["query1", "query2"]
-}`;
+const MODEL = "mistral-large-latest";
 
-function getClient(): Mistral {
-  const apiKey = process.env.MISTRAL_API_KEY;
-  if (!apiKey) {
-    throw new Error("MISTRAL_API_KEY not configured");
-  }
-  return new Mistral({ apiKey });
+export type MarketTag =
+  | "politics"
+  | "crypto"
+  | "sports"
+  | "business"
+  | "science"
+  | "pop-culture";
+
+export interface AnalysisSignal {
+  detected: boolean;
+  queries: string[];
+  tag: MarketTag | null;
+  reason: string;
 }
 
-export async function analyzeTranscript(
-  transcript: string,
-  context?: Partial<AnalysisContext>
-): Promise<AnalysisResult> {
-  const client = getClient();
+const RESPONSE_SCHEMA = {
+  type: "object",
+  properties: {
+    detected: {
+      type: "boolean",
+      description:
+        "Whether a betting/prediction market topic is being discussed",
+    },
+    queries: {
+      type: "array",
+      items: { type: "string" },
+      description:
+        "1-3 distinct keyword phrases optimised for Polymarket search, covering different angles of the topic",
+    },
+    tag: {
+      type: "string",
+      enum: ["politics", "crypto", "sports", "business", "science", "pop-culture"],
+      description: "Category of the detected market",
+      nullable: true,
+    },
+    reason: {
+      type: "string",
+      description:
+        "Concise summary (max 20 words) of what is being discussed and why it could be a bet",
+    },
+  },
+  required: ["detected", "queries", "reason"],
+} as const;
 
-  const userMessage = context?.userIntent
-    ? `Context: ${context.userIntent}\n\nTranscript:\n${transcript}`
-    : `Transcript:\n${transcript}`;
+// Clean LLM output artifacts (matches tags like <grok:render>...</grok:render>)
+const RENDER_TAG_RE = /<[a-z]+:[a-z]+[^>]*>[\s\S]*?<\/[a-z]+:[a-z]+>/g;
+
+function cleanText(text: string): string {
+  if (!text) return "";
+  return text.replace(RENDER_TAG_RE, "").trim();
+}
+
+/**
+ * Analyse a transcript chunk and return a structured prediction-market signal.
+ */
+export async function analyze(transcript: string): Promise<AnalysisSignal> {
+  const now = new Date().toLocaleDateString("en-US", {
+    month: "long",
+    year: "numeric",
+  });
 
   const response = await client.chat.complete({
-    model: "mistral-small-latest",
+    model: MODEL,
     messages: [
-      { role: "system", content: SYSTEM_PROMPT },
-      { role: "user", content: userMessage },
+      {
+        role: "system",
+        content: `You are an expert at identifying topics that could have active prediction markets on Polymarket.
+The current date is ${now}. Treat any mentions of future events relative to this date.
+You are analysing a live transcript from someone wearing Meta smart glasses at a real-world event (sports game, conference, rally, etc.).
+Identify if ANY subject being discussed could have a prediction/betting market. "detected" should only be true if a clear market is likely to exist.
+When detected is true, generate 2-3 diverse search query variations to maximise Polymarket search coverage.
+Always respond in valid JSON matching the provided schema.`,
+      },
+      {
+        role: "user",
+        content: `Analyse this live transcript and identify prediction market opportunities:\n\n"${transcript}"`,
+      },
     ],
-    responseFormat: { type: "json_object" },
+    responseFormat: {
+      type: "json_schema",
+      jsonSchema: {
+        name: "polymarket_signal",
+        strict: true,
+        schemaDefinition: RESPONSE_SCHEMA,
+      },
+    },
+    temperature: 0.2,
   });
 
-  const content = response.choices?.[0]?.message?.content;
-  if (!content || typeof content !== "string") {
-    throw new Error("No response from Mistral");
+  const raw = response.choices?.[0]?.message?.content;
+  if (!raw || typeof raw !== "string") {
+    return { detected: false, queries: [], tag: null, reason: "" };
   }
 
-  const parsed = JSON.parse(content);
-  return {
-    sentiment: parsed.sentiment ?? "neutral",
-    confidence: parsed.confidence ?? 0.5,
-    summary: parsed.summary ?? "",
-    entities: parsed.entities ?? [],
-    suggestedQueries: parsed.suggestedQueries ?? [],
-  };
-}
+  const result = JSON.parse(raw) as AnalysisSignal;
 
-export async function streamAnalysis(
-  transcript: string,
-  onChunk: (chunk: string) => void
-): Promise<void> {
-  const client = getClient();
+  // Sanitise strings
+  if (result.reason) result.reason = cleanText(result.reason);
+  if (result.queries) result.queries = result.queries.map(cleanText);
+  if (!result.tag) result.tag = null;
 
-  const stream = await client.chat.stream({
-    model: "mistral-small-latest",
-    messages: [
-      { role: "system", content: SYSTEM_PROMPT },
-      { role: "user", content: `Transcript:\n${transcript}` },
-    ],
-  });
-
-  for await (const event of stream) {
-    const content = event.data.choices?.[0]?.delta?.content;
-    if (content && typeof content === "string") {
-      onChunk(content);
-    }
-  }
+  return result;
 }
