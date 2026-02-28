@@ -68,6 +68,19 @@ export function resetClients(): void {
 export function attachWebSocket(server: HttpServer): void {
   const wss = new WebSocketServer({ noServer: true });
 
+  // Ping all clients every 30s to keep connections alive through NATs/proxies
+  const pingInterval = setInterval(() => {
+    for (const set of [frameClients, transcriptClients, allClients]) {
+      for (const ws of set) {
+        if (ws.readyState === WebSocket.OPEN) {
+          ws.ping();
+        }
+      }
+    }
+  }, 30_000);
+
+  server.on("close", () => clearInterval(pingInterval));
+
   server.on("upgrade", (req: IncomingMessage, socket, head) => {
     const pathname = new URL(req.url || "/", "http://localhost").pathname;
 
@@ -85,7 +98,16 @@ export function attachWebSocket(server: HttpServer): void {
   });
 }
 
+function removeFromAll(ws: WebSocket): void {
+  frameClients.delete(ws);
+  transcriptClients.delete(ws);
+  allClients.delete(ws);
+}
+
 function handleConnection(ws: WebSocket, path: string): void {
+  // Prevent unhandled errors from crashing the server
+  ws.on("error", () => removeFromAll(ws));
+
   switch (path) {
     case "/ws/frames": {
       frameClients.add(ws);

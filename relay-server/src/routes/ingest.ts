@@ -1,5 +1,5 @@
-import { Router } from "express";
-import multer from "multer";
+import { Router, Request, Response, NextFunction } from "express";
+import multer, { MulterError } from "multer";
 import { v4 as uuidv4 } from "uuid";
 import { state } from "../state";
 import { broadcastFrame, broadcastTranscript } from "../ws/handler";
@@ -70,6 +70,15 @@ router.post("/transcript", (req, res) => {
   broadcastTranscript(wsMsg);
 
   res.status(200).json(segment);
+});
+
+// Catch multer errors (wrong field name, file too large) and return 400 instead of 500
+router.use((err: Error, _req: Request, res: Response, next: NextFunction) => {
+  if (err instanceof MulterError) {
+    res.status(400).json({ error: err.message });
+    return;
+  }
+  next(err);
 });
 
 export default router;

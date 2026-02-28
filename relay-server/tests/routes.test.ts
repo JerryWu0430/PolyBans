@@ -108,11 +108,12 @@ describe("REST endpoints", () => {
       expect(res.body.error).toContain("No file");
     });
 
-    it("rejects wrong field name", async () => {
+    it("rejects wrong field name with 400", async () => {
       const res = await request(app)
         .post("/ingest/frame")
         .attach("image", Buffer.from("data"), "test.jpg");
-      expect(res.status).not.toBe(200);
+      expect(res.status).toBe(400);
+      expect(res.body.error).toBeDefined();
     });
 
     it("increments health counters", async () => {
