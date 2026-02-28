@@ -14,6 +14,7 @@ import {
 } from "@/components/raybans";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Circle, Loader2 } from "lucide-react";
 import type { TranscriptChunk } from "@/lib/types/stream";
 
 export default function RayBansPage() {
@@ -170,9 +171,19 @@ export default function RayBansPage() {
           {isStreaming && (
             <Badge
               variant={isLiveConnected ? "default" : "secondary"}
-              className="text-xs"
+              className="text-xs gap-1.5"
             >
-              {polymarketState === "connected" ? "🟢 Live" : "🟡 Connecting"}
+              {polymarketState === "connected" ? (
+                <>
+                  <Circle className="h-2 w-2 fill-green-500 text-green-500" />
+                  Live
+                </>
+              ) : (
+                <>
+                  <Loader2 className="h-3 w-3 animate-spin" />
+                  Connecting
+                </>
+              )}
             </Badge>
           )}
         </div>
