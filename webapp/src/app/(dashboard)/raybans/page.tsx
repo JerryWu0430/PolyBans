@@ -5,6 +5,7 @@ import { useStreamStore } from "@/lib/stores/streamStore";
 import { useArbitrageStore } from "@/lib/stores/arbitrageStore";
 import { useAnalysisPipeline } from "@/lib/hooks/useAnalysisPipeline";
 import { useRelayStream } from "@/lib/hooks/useRelayStream";
+import { useFrameStream } from "@/lib/hooks/useFrameStream";
 import { startMockStream } from "@/lib/mockStream";
 import { VideoFeed } from "@/components/raybans/VideoFeed";
 import { TranscriptOverlay } from "@/components/raybans/TranscriptOverlay";
@@ -45,6 +46,12 @@ export default function RayBansPage() {
     connect: connectRelay,
     disconnect: disconnectRelay,
   } = useRelayStream({ channel: "transcript" });
+
+  const {
+    frameUrl,
+    connect: connectFrames,
+    disconnect: disconnectFrames,
+  } = useFrameStream();
 
   const [isStreaming, setIsStreaming] = useState(false);
   const [useMockStream, setUseMockStream] = useState(true);
@@ -117,6 +124,7 @@ export default function RayBansPage() {
       setIsStreaming(false);
       setConnected(false);
       disconnectRelay();
+      disconnectFrames();
       resetPipeline();
     } else {
       setMode("raybans");
@@ -124,6 +132,7 @@ export default function RayBansPage() {
       setIsStreaming(true);
       if (!useMockStream) {
         connectRelay();
+        connectFrames();
       }
     }
   }, [
@@ -209,6 +218,7 @@ export default function RayBansPage() {
             {/* Video + Transcript Overlay */}
             <div className="flex-1 relative min-h-0">
               <VideoFeed
+                frameUrl={!useMockStream ? frameUrl ?? undefined : undefined}
                 isConnected={isLiveConnected}
                 isMock={useMockStream}
                 className="absolute inset-0 rounded-none border-0"
