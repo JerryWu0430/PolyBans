@@ -19,7 +19,7 @@ actor RelayClient {
     private let decoder = JSONDecoder()
     let status: RelayConnectionStatus
 
-    init(host: String, port: Int = 8420, status: RelayConnectionStatus) {
+    init(host: String, port: Int = 8420, status: RelayConnectionStatus? = nil) async {
         let base = "http://\(host):\(port)"
         self.frameURL = URL(string: "\(base)/ingest/frame")!
         self.transcriptURL = URL(string: "\(base)/ingest/transcript")!
@@ -27,17 +27,27 @@ actor RelayClient {
         let config = URLSessionConfiguration.default
         config.timeoutIntervalForRequest = 5
         self.session = URLSession(configuration: config)
-        self.status = status
+        if let status {
+            self.status = status
+        } else {
+            // Create default status on the main actor to satisfy isolation
+            self.status = await MainActor.run { RelayConnectionStatus() }
+        }
     }
 
     /// Test-only initializer that accepts a custom URLSessionConfiguration (e.g., with MockURLProtocol).
-    init(host: String, port: Int = 8420, configuration: URLSessionConfiguration, status: RelayConnectionStatus) {
+    init(host: String, port: Int = 8420, configuration: URLSessionConfiguration, status: RelayConnectionStatus? = nil) async {
         let base = "http://\(host):\(port)"
         self.frameURL = URL(string: "\(base)/ingest/frame")!
         self.transcriptURL = URL(string: "\(base)/ingest/transcript")!
         self.healthURL = URL(string: "\(base)/health")!
         self.session = URLSession(configuration: configuration)
-        self.status = status
+        if let status {
+            self.status = status
+        } else {
+            // Create default status on the main actor to satisfy isolation
+            self.status = await MainActor.run { RelayConnectionStatus() }
+        }
     }
 
     // MARK: - Push Frame (multipart/form-data)

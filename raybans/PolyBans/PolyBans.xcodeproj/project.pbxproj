@@ -1,0 +1,613 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		8D7D240E2F534CC100E8C995 /* RelayModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8D7D240D2F534CC100E8C995 /* RelayModels.swift */; };
+		8D7D240F2F534CC100E8C995 /* RelayClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8D7D240C2F534CC100E8C995 /* RelayClient.swift */; };
+		8D7D24112F534CD600E8C995 /* PolyBansSessionViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8D7D24102F534CD600E8C995 /* PolyBansSessionViewModel.swift */; };
+		8D7D24132F534D0500E8C995 /* SpeechTranscriber.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8D7D24122F534D0500E8C995 /* SpeechTranscriber.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		8D7D23EF2F53280700E8C995 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 8D7D23D52F53280600E8C995 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 8D7D23DC2F53280600E8C995;
+			remoteInfo = PolyBans;
+		};
+		8D7D23F92F53280700E8C995 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 8D7D23D52F53280600E8C995 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 8D7D23DC2F53280600E8C995;
+			remoteInfo = PolyBans;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXFileReference section */
+		8D7D23DD2F53280600E8C995 /* PolyBans.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = PolyBans.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		8D7D23EE2F53280700E8C995 /* PolyBansTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = PolyBansTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		8D7D23F82F53280700E8C995 /* PolyBansUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = PolyBansUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		8D7D240C2F534CC100E8C995 /* RelayClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RelayClient.swift; sourceTree = "<group>"; };
+		8D7D240D2F534CC100E8C995 /* RelayModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RelayModels.swift; sourceTree = "<group>"; };
+		8D7D24102F534CD600E8C995 /* PolyBansSessionViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PolyBansSessionViewModel.swift; sourceTree = "<group>"; };
+		8D7D24122F534D0500E8C995 /* SpeechTranscriber.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpeechTranscriber.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		8D7D24002F53280700E8C995 /* Exceptions for "PolyBans" folder in "PolyBans" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 8D7D23DC2F53280600E8C995 /* PolyBans */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
+/* Begin PBXFileSystemSynchronizedRootGroup section */
+		8D7D23DF2F53280600E8C995 /* PolyBans */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				8D7D24002F53280700E8C995 /* Exceptions for "PolyBans" folder in "PolyBans" target */,
+			);
+			path = PolyBans;
+			sourceTree = "<group>";
+		};
+		8D7D23F12F53280700E8C995 /* PolyBansTests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = PolyBansTests;
+			sourceTree = "<group>";
+		};
+		8D7D23FB2F53280700E8C995 /* PolyBansUITests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = PolyBansUITests;
+			sourceTree = "<group>";
+		};
+/* End PBXFileSystemSynchronizedRootGroup section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		8D7D23DA2F53280600E8C995 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		8D7D23EB2F53280700E8C995 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		8D7D23F52F53280700E8C995 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		8D7D23D42F53280600E8C995 = {
+			isa = PBXGroup;
+			children = (
+				8D7D24122F534D0500E8C995 /* SpeechTranscriber.swift */,
+				8D7D24102F534CD600E8C995 /* PolyBansSessionViewModel.swift */,
+				8D7D240C2F534CC100E8C995 /* RelayClient.swift */,
+				8D7D240D2F534CC100E8C995 /* RelayModels.swift */,
+				8D7D23DF2F53280600E8C995 /* PolyBans */,
+				8D7D23F12F53280700E8C995 /* PolyBansTests */,
+				8D7D23FB2F53280700E8C995 /* PolyBansUITests */,
+				8D7D23DE2F53280600E8C995 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		8D7D23DE2F53280600E8C995 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				8D7D23DD2F53280600E8C995 /* PolyBans.app */,
+				8D7D23EE2F53280700E8C995 /* PolyBansTests.xctest */,
+				8D7D23F82F53280700E8C995 /* PolyBansUITests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		8D7D23DC2F53280600E8C995 /* PolyBans */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 8D7D24012F53280700E8C995 /* Build configuration list for PBXNativeTarget "PolyBans" */;
+			buildPhases = (
+				8D7D23D92F53280600E8C995 /* Sources */,
+				8D7D23DA2F53280600E8C995 /* Frameworks */,
+				8D7D23DB2F53280600E8C995 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				8D7D23DF2F53280600E8C995 /* PolyBans */,
+			);
+			name = PolyBans;
+			packageProductDependencies = (
+			);
+			productName = PolyBans;
+			productReference = 8D7D23DD2F53280600E8C995 /* PolyBans.app */;
+			productType = "com.apple.product-type.application";
+		};
+		8D7D23ED2F53280700E8C995 /* PolyBansTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 8D7D24062F53280700E8C995 /* Build configuration list for PBXNativeTarget "PolyBansTests" */;
+			buildPhases = (
+				8D7D23EA2F53280700E8C995 /* Sources */,
+				8D7D23EB2F53280700E8C995 /* Frameworks */,
+				8D7D23EC2F53280700E8C995 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				8D7D23F02F53280700E8C995 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				8D7D23F12F53280700E8C995 /* PolyBansTests */,
+			);
+			name = PolyBansTests;
+			packageProductDependencies = (
+			);
+			productName = PolyBansTests;
+			productReference = 8D7D23EE2F53280700E8C995 /* PolyBansTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+		8D7D23F72F53280700E8C995 /* PolyBansUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 8D7D24092F53280700E8C995 /* Build configuration list for PBXNativeTarget "PolyBansUITests" */;
+			buildPhases = (
+				8D7D23F42F53280700E8C995 /* Sources */,
+				8D7D23F52F53280700E8C995 /* Frameworks */,
+				8D7D23F62F53280700E8C995 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				8D7D23FA2F53280700E8C995 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				8D7D23FB2F53280700E8C995 /* PolyBansUITests */,
+			);
+			name = PolyBansUITests;
+			packageProductDependencies = (
+			);
+			productName = PolyBansUITests;
+			productReference = 8D7D23F82F53280700E8C995 /* PolyBansUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		8D7D23D52F53280600E8C995 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 2630;
+				LastUpgradeCheck = 2630;
+				TargetAttributes = {
+					8D7D23DC2F53280600E8C995 = {
+						CreatedOnToolsVersion = 26.3;
+					};
+					8D7D23ED2F53280700E8C995 = {
+						CreatedOnToolsVersion = 26.3;
+						TestTargetID = 8D7D23DC2F53280600E8C995;
+					};
+					8D7D23F72F53280700E8C995 = {
+						CreatedOnToolsVersion = 26.3;
+						TestTargetID = 8D7D23DC2F53280600E8C995;
+					};
+				};
+			};
+			buildConfigurationList = 8D7D23D82F53280600E8C995 /* Build configuration list for PBXProject "PolyBans" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = 8D7D23D42F53280600E8C995;
+			minimizedProjectReferenceProxies = 1;
+			preferredProjectObjectVersion = 77;
+			productRefGroup = 8D7D23DE2F53280600E8C995 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				8D7D23DC2F53280600E8C995 /* PolyBans */,
+				8D7D23ED2F53280700E8C995 /* PolyBansTests */,
+				8D7D23F72F53280700E8C995 /* PolyBansUITests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		8D7D23DB2F53280600E8C995 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		8D7D23EC2F53280700E8C995 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		8D7D23F62F53280700E8C995 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		8D7D23D92F53280600E8C995 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				8D7D240E2F534CC100E8C995 /* RelayModels.swift in Sources */,
+				8D7D240F2F534CC100E8C995 /* RelayClient.swift in Sources */,
+				8D7D24132F534D0500E8C995 /* SpeechTranscriber.swift in Sources */,
+				8D7D24112F534CD600E8C995 /* PolyBansSessionViewModel.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		8D7D23EA2F53280700E8C995 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		8D7D23F42F53280700E8C995 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		8D7D23F02F53280700E8C995 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 8D7D23DC2F53280600E8C995 /* PolyBans */;
+			targetProxy = 8D7D23EF2F53280700E8C995 /* PBXContainerItemProxy */;
+		};
+		8D7D23FA2F53280700E8C995 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 8D7D23DC2F53280600E8C995 /* PolyBans */;
+			targetProxy = 8D7D23F92F53280700E8C995 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		8D7D24022F53280700E8C995 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = PolyBans/PolyBans.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = CM77Z5GPZW;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = PolyBans/Info.plist;
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.PolyBans;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		8D7D24032F53280700E8C995 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = PolyBans/PolyBans.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = CM77Z5GPZW;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = PolyBans/Info.plist;
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.PolyBans;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		8D7D24042F53280700E8C995 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.2;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		8D7D24052F53280700E8C995 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.2;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		8D7D24072F53280700E8C995 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.2;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.PolyBansTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/PolyBans.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/PolyBans";
+			};
+			name = Debug;
+		};
+		8D7D24082F53280700E8C995 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.2;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.PolyBansTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/PolyBans.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/PolyBans";
+			};
+			name = Release;
+		};
+		8D7D240A2F53280700E8C995 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.PolyBansUITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = PolyBans;
+			};
+			name = Debug;
+		};
+		8D7D240B2F53280700E8C995 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.PolyBansUITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = PolyBans;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		8D7D23D82F53280600E8C995 /* Build configuration list for PBXProject "PolyBans" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				8D7D24042F53280700E8C995 /* Debug */,
+				8D7D24052F53280700E8C995 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		8D7D24012F53280700E8C995 /* Build configuration list for PBXNativeTarget "PolyBans" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				8D7D24022F53280700E8C995 /* Debug */,
+				8D7D24032F53280700E8C995 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		8D7D24062F53280700E8C995 /* Build configuration list for PBXNativeTarget "PolyBansTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				8D7D24072F53280700E8C995 /* Debug */,
+				8D7D24082F53280700E8C995 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		8D7D24092F53280700E8C995 /* Build configuration list for PBXNativeTarget "PolyBansUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				8D7D240A2F53280700E8C995 /* Debug */,
+				8D7D240B2F53280700E8C995 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 8D7D23D52F53280600E8C995 /* Project object */;
+}
