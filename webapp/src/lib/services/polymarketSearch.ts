@@ -13,7 +13,7 @@ interface GammaMarket {
   outcomePrices?: string; // JSON array string like "[\"0.45\", \"0.55\"]"
   clobTokenIds?: string; // JSON array string of token IDs
   volume?: string;
-  question?: string;
+  question?: string; // sub-market question, e.g. "Will Real Madrid win LaLiga?"
 }
 
 // Transformed structure for UI
@@ -50,36 +50,57 @@ function parseJsonArray(str: string | undefined): string[] {
 
 /**
  * Transform raw API market data to UI-friendly format.
- * Each GammaMarket has parallel arrays: outcomes=["Yes","No"], outcomePrices=["0.45","0.55"]
+ *
+ * Multi-market events (e.g. "Which team wins?") have one sub-market per option.
+ * For these, extract the Yes (index 0) price per sub-market and use the
+ * market question as the outcome label.
+ *
+ * Single binary markets (e.g. "Will X happen?") keep the standard Yes/No pair.
  */
 function transformMarkets(rawMarkets: GammaMarket[] | undefined): MarketOutcome[] {
-  if (!rawMarkets || !Array.isArray(rawMarkets)) return [];
+  if (!rawMarkets || !Array.isArray(rawMarkets) || rawMarkets.length === 0) return [];
 
-  const results: MarketOutcome[] = [];
+  // Multi-market event: each sub-market = one outcome option
+  if (rawMarkets.length > 1) {
+    return rawMarkets.slice(0, 6).map((market) => {
+      const prices = parseJsonArray(market.outcomePrices);
+      const tokenIds = parseJsonArray(market.clobTokenIds);
+      // index 0 is always the "Yes" / long price
+      const yesPrice = parseFloat(prices[0]) || 0;
 
-  for (const market of rawMarkets.slice(0, 4)) {
-    const outcomes = parseJsonArray(market.outcomes);
-    const prices = parseJsonArray(market.outcomePrices);
-    const tokenIds = parseJsonArray(market.clobTokenIds);
+      // Shorten the question to just the entity name:
+      // "Will Real Madrid win LaLiga?" → "Real Madrid"
+      let label = market.question ?? "Unknown";
+      label = label.replace(/^Will\s+/i, "").replace(/\s*(win|qualify|advance|be|become|make).*$/i, "").trim();
+      if (!label) label = market.question ?? "Unknown";
 
-    // Pair outcomes with their prices
-    for (let i = 0; i < outcomes.length && i < 4; i++) {
-      const outcome = outcomes[i] || "Unknown";
-      const price = parseFloat(prices[i]) || 0;
-      const clobTokenId = tokenIds[i];
+      console.log(`[polymarket] Outcome: "${label}" price=${yesPrice}`);
 
-      console.log(`[polymarket] Outcome: "${outcome}" price=${price}`);
-
-      results.push({
-        outcome,
-        price,
+      return {
+        outcome: label,
+        price: yesPrice,
         volume: market.volume,
-        clobTokenId,
-      });
-    }
+        clobTokenId: tokenIds[0],
+      };
+    });
   }
 
-  return results;
+  // Single binary market: keep Yes / No
+  const market = rawMarkets[0];
+  const outcomes = parseJsonArray(market.outcomes);
+  const prices = parseJsonArray(market.outcomePrices);
+  const tokenIds = parseJsonArray(market.clobTokenIds);
+
+  return outcomes.slice(0, 2).map((outcome, i) => {
+    const price = parseFloat(prices[i]) || 0;
+    console.log(`[polymarket] Outcome: "${outcome}" price=${price}`);
+    return {
+      outcome,
+      price,
+      volume: market.volume,
+      clobTokenId: tokenIds[i],
+    };
+  });
 }
 
 /**
