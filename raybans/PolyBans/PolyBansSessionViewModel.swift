@@ -8,6 +8,7 @@ final class PolyBansSessionViewModel: ObservableObject {
     // MARK: - Published State
 
     @Published var isActive = false
+    @Published var cameraActive = false
     @Published var relayConnected = false
     @Published var userTranscript = ""
     @Published var latestFrame: UIImage?
@@ -111,13 +112,9 @@ final class PolyBansSessionViewModel: ObservableObject {
 
         // 4. Start speech
         speechTranscriber.start()
-
-        // 5. Start camera
-        startCamera()
     }
 
     func stopSession() {
-        stopCamera()
         flushTimer?.invalidate()
         flushTimer = nil
         lastFlushedTranscript = ""
@@ -135,13 +132,17 @@ final class PolyBansSessionViewModel: ObservableObject {
 
     // MARK: - Camera Lifecycle
 
-    private func startCamera() {
+    func startCamera() {
+        guard !cameraActive else { return }
+        cameraActive = true
         let throttler = FrameThrottler(interval: 1.0)
         self.frameThrottler = throttler
 
         throttler.onThrottledFrame = { [weak self] image in
             Task { @MainActor in
-                self?.handleFrame(image)
+                guard let self else { return }
+                self.latestFrame = image
+                self.handleFrame(image)
             }
         }
 
@@ -152,11 +153,13 @@ final class PolyBansSessionViewModel: ObservableObject {
         glassesManager.start()
     }
 
-    private func stopCamera() {
+    func stopCamera() {
         glassesManager.stop()
         glassesManager.onFrameCaptured = nil
         frameThrottler?.onThrottledFrame = nil
         frameThrottler = nil
+        cameraActive = false
+        latestFrame = nil
     }
 
     // MARK: - Camera Integration

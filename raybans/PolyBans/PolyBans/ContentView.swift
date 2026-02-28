@@ -6,7 +6,7 @@
 import SwiftUI
 
 struct ContentView: View {
-    @StateObject private var vm = PolyBansSessionViewModel()
+    @ObservedObject var vm: PolyBansSessionViewModel
 
     // Mac's local IP — relay-server runs here on port 8420
     private let relayHost = "10.1.92.4"
@@ -23,7 +23,36 @@ struct ContentView: View {
                         .scaledToFit()
                         .frame(maxHeight: 200)
                         .clipShape(RoundedRectangle(cornerRadius: 8))
+                } else if vm.cameraActive {
+                    VStack {
+                        ProgressView()
+                        Text("Waiting for frames…")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                    .frame(maxHeight: 200)
                 }
+
+                // MARK: Camera Button
+                Button {
+                    if vm.cameraActive {
+                        vm.stopCamera()
+                    } else {
+                        vm.startCamera()
+                    }
+                } label: {
+                    Label(
+                        vm.cameraActive ? "Stop Camera" : "Start Camera",
+                        systemImage: vm.cameraActive ? "video.slash.fill" : "video.fill"
+                    )
+                    .font(.subheadline.bold())
+                    .frame(maxWidth: .infinity)
+                    .padding(10)
+                    .background(vm.cameraActive ? Color.orange : Color.teal)
+                    .foregroundStyle(.white)
+                    .clipShape(RoundedRectangle(cornerRadius: 10))
+                }
+                .padding(.horizontal)
 
                 // MARK: Glasses
                 NavigationLink {
@@ -79,11 +108,11 @@ struct ContentView: View {
 
                 Spacer()
 
-                // MARK: Start / Stop
+                // MARK: Start / Stop Session
                 Button {
                     Task { @MainActor in
                         if vm.isActive {
-                            await vm.stopSession()
+                            vm.stopSession()
                         } else {
                             await vm.startSession(host: relayHost, port: relayPort)
                         }
@@ -109,6 +138,5 @@ struct ContentView: View {
 }
 
 #Preview {
-    ContentView()
+    ContentView(vm: PolyBansSessionViewModel())
 }
-
