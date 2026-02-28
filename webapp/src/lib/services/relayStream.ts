@@ -18,12 +18,14 @@ export interface RelayStreamOptions {
 }
 
 const DEFAULT_BASE_URL = process.env.NEXT_PUBLIC_RELAY_WS_URL || "ws://localhost:8420";
+const DEFAULT_HTTP_BASE_URL = process.env.NEXT_PUBLIC_RELAY_HTTP_URL || "http://localhost:8420";
 const DEFAULT_MAX_RETRIES = 10;
 const DEFAULT_BASE_DELAY = 1000;
 
 export class RelayStream {
   private ws: WebSocket | null = null;
   private baseUrl: string;
+  private httpBaseUrl: string;
   private channel: RelayChannel;
   private onMessage: (msg: RelayMessage) => void;
   private onTranscript: (segment: TranscriptSegment) => void;
@@ -37,6 +39,7 @@ export class RelayStream {
 
   constructor(options: RelayStreamOptions = {}) {
     this.baseUrl = options.baseUrl || DEFAULT_BASE_URL;
+    this.httpBaseUrl = this.baseUrl.replace(/^ws/, "http");
     this.channel = options.channel || "transcript";
     this.onMessage = options.onMessage || (() => {});
     this.onTranscript = options.onTranscript || (() => {});
@@ -128,6 +131,17 @@ export class RelayStream {
     }
 
     this.onStateChange("disconnected");
+  }
+
+  async sendTts(text: string): Promise<void> {
+    const res = await fetch(`${this.httpBaseUrl}/ingest/tts`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text }),
+    });
+    if (!res.ok) {
+      throw new Error(`TTS send failed: ${res.status}`);
+    }
   }
 
   get state(): ConnectionState {

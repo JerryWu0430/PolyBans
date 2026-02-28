@@ -20,6 +20,7 @@ final class PolyBansSessionViewModel: ObservableObject {
 
     private var relay: RelayClient?
     private let speechTranscriber = SpeechTranscriber()
+    private let ttsPlayer = TTSPlayer()
     private let relayStatus = RelayConnectionStatus()
     let glassesManager = GlassesCameraManager()
     private var frameThrottler: FrameThrottler?
@@ -57,6 +58,14 @@ final class PolyBansSessionViewModel: ObservableObject {
         self.relay = client
         isActive = true
         errorMessage = nil
+
+        // 0. Start TTS WebSocket listener
+        Task {
+            await client.setOnTtsReceived { [weak self] text in
+                self?.ttsPlayer.speak(text)
+            }
+            await client.startListening()
+        }
 
         // 1. Health check
         Task {
@@ -119,6 +128,10 @@ final class PolyBansSessionViewModel: ObservableObject {
         flushTimer = nil
         lastFlushedTranscript = ""
         speechTranscriber.stop()
+        ttsPlayer.stop()
+        if let relay {
+            Task { await relay.stopListening() }
+        }
         relay = nil
         isActive = false
         relayConnected = false

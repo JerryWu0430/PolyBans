@@ -12,7 +12,7 @@ import { TranscriptOverlay } from "@/components/raybans/TranscriptOverlay";
 import { MarketsSidebar } from "@/components/raybans/MarketsSidebar";
 import { VideoControlBar } from "@/components/raybans/VideoControlBar";
 import { MarketOrderModal } from "@/components/raybans/MarketOrderModal";
-import { Glasses, Clock, Zap } from "lucide-react";
+import { Glasses, Clock, Zap, Volume2 } from "lucide-react";
 import type { TranscriptChunk } from "@/lib/types/stream";
 
 export default function RayBansPage() {
@@ -45,6 +45,7 @@ export default function RayBansPage() {
     transcripts: relayTranscripts,
     connect: connectRelay,
     disconnect: disconnectRelay,
+    sendTts,
   } = useRelayStream({ channel: "transcript" });
 
   const {
@@ -56,6 +57,8 @@ export default function RayBansPage() {
   const [isStreaming, setIsStreaming] = useState(false);
   const [useMockStream, setUseMockStream] = useState(true);
   const [currentTime, setCurrentTime] = useState(new Date());
+  const [ttsText, setTtsText] = useState("");
+  const [ttsSending, setTtsSending] = useState(false);
 
   // Live clock
   useEffect(() => {
@@ -240,6 +243,42 @@ export default function RayBansPage() {
               onToggleStream={toggleStream}
               onToggleMock={() => setUseMockStream(!useMockStream)}
             />
+
+            {/* TTS Input */}
+            <div className="flex items-center gap-2 px-4 py-2 border-t border-border/50 bg-card/50">
+              <Volume2 className="h-4 w-4 text-muted-foreground shrink-0" />
+              <input
+                type="text"
+                value={ttsText}
+                onChange={(e) => setTtsText(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && ttsText.trim() && !ttsSending) {
+                    e.preventDefault();
+                    const text = ttsText.trim();
+                    setTtsText("");
+                    setTtsSending(true);
+                    sendTts(text).catch(console.error).finally(() => setTtsSending(false));
+                  }
+                }}
+                placeholder="Type text to speak through glasses..."
+                className="flex-1 bg-background/50 border border-border/50 rounded px-3 py-1.5 text-sm font-mono placeholder:text-muted-foreground/50 focus:outline-none focus:border-primary/50"
+                disabled={ttsSending}
+              />
+              <button
+                onClick={() => {
+                  if (ttsText.trim() && !ttsSending) {
+                    const text = ttsText.trim();
+                    setTtsText("");
+                    setTtsSending(true);
+                    sendTts(text).catch(console.error).finally(() => setTtsSending(false));
+                  }
+                }}
+                disabled={!ttsText.trim() || ttsSending}
+                className="px-3 py-1.5 text-xs font-mono bg-primary/20 border border-primary/30 rounded hover:bg-primary/30 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                {ttsSending ? "SENDING..." : "SEND TO GLASSES"}
+              </button>
+            </div>
           </div>
 
           {/* Right: Markets Sidebar */}

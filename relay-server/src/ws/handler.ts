@@ -2,10 +2,11 @@ import { Server as HttpServer, IncomingMessage } from "http";
 import { WebSocketServer, WebSocket } from "ws";
 import { URL } from "url";
 import { state } from "../state";
-import { WsFrameMessage, WsTranscriptMessage, WsHistoryMessage } from "../types";
+import { WsFrameMessage, WsTranscriptMessage, WsHistoryMessage, WsTtsMessage } from "../types";
 
 const frameClients = new Set<WebSocket>();
 const transcriptClients = new Set<WebSocket>();
+const ttsClients = new Set<WebSocket>();
 const allClients = new Set<WebSocket>();
 
 function safeSend(ws: WebSocket, data: string): boolean {
@@ -46,22 +47,36 @@ export function broadcastTranscript(msg: WsTranscriptMessage): void {
   }
 }
 
+export function broadcastTts(msg: WsTtsMessage): void {
+  const payload = JSON.stringify(msg);
+  for (const ws of ttsClients) {
+    if (!safeSend(ws, payload)) ttsClients.delete(ws);
+  }
+  for (const ws of allClients) {
+    if (!safeSend(ws, payload)) allClients.delete(ws);
+  }
+}
+
 export function getSubscriberCounts(): {
   frameSubscribers: number;
   transcriptSubscribers: number;
+  ttsSubscribers: number;
 } {
   pruneSet(frameClients);
   pruneSet(transcriptClients);
+  pruneSet(ttsClients);
   pruneSet(allClients);
   return {
     frameSubscribers: frameClients.size + allClients.size,
     transcriptSubscribers: transcriptClients.size + allClients.size,
+    ttsSubscribers: ttsClients.size + allClients.size,
   };
 }
 
 export function resetClients(): void {
   frameClients.clear();
   transcriptClients.clear();
+  ttsClients.clear();
   allClients.clear();
 }
 
@@ -70,7 +85,7 @@ export function attachWebSocket(server: HttpServer): void {
 
   // Ping all clients every 30s to keep connections alive through NATs/proxies
   const pingInterval = setInterval(() => {
-    for (const set of [frameClients, transcriptClients, allClients]) {
+    for (const set of [frameClients, transcriptClients, ttsClients, allClients]) {
       for (const ws of set) {
         if (ws.readyState === WebSocket.OPEN) {
           ws.ping();
@@ -87,6 +102,7 @@ export function attachWebSocket(server: HttpServer): void {
     if (
       pathname === "/ws/frames" ||
       pathname === "/ws/transcript" ||
+      pathname === "/ws/tts" ||
       pathname === "/ws/all"
     ) {
       wss.handleUpgrade(req, socket, head, (ws) => {
@@ -101,6 +117,7 @@ export function attachWebSocket(server: HttpServer): void {
 function removeFromAll(ws: WebSocket): void {
   frameClients.delete(ws);
   transcriptClients.delete(ws);
+  ttsClients.delete(ws);
   allClients.delete(ws);
 }
 
@@ -136,6 +153,12 @@ function handleConnection(ws: WebSocket, path: string): void {
         safeSend(ws, JSON.stringify(msg));
       }
       ws.on("close", () => transcriptClients.delete(ws));
+      break;
+    }
+
+    case "/ws/tts": {
+      ttsClients.add(ws);
+      ws.on("close", () => ttsClients.delete(ws));
       break;
     }
 

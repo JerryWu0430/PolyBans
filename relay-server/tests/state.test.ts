@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { RingBuffer, RelayState } from "../src/state";
-import { FrameEntry, TranscriptSegment } from "../src/types";
+import { FrameEntry, TranscriptSegment, WsTtsMessage } from "../src/types";
 
 function makeFrame(id: string): FrameEntry {
   const buf = Buffer.from(`frame-${id}`);
@@ -13,6 +13,10 @@ function makeFrame(id: string): FrameEntry {
 
 function makeTranscript(id: string, text: string): TranscriptSegment {
   return { id, text, timestamp: Date.now() };
+}
+
+function makeTts(id: string, text: string): WsTtsMessage {
+  return { type: "tts", id, text, timestamp: Date.now() };
 }
 
 describe("RingBuffer", () => {
@@ -78,6 +82,7 @@ describe("RelayState", () => {
   it("starts with zero counts", () => {
     expect(state.framesIngested).toBe(0);
     expect(state.transcriptsIngested).toBe(0);
+    expect(state.ttsIngested).toBe(0);
   });
 
   it("tracks frame ingestion count", () => {
@@ -126,11 +131,14 @@ describe("RelayState", () => {
   it("reset clears everything and resets counts", () => {
     state.addFrame(makeFrame("a"));
     state.addTranscript(makeTranscript("1", "hello"));
+    state.addTts(makeTts("t1", "speak"));
     state.reset();
     expect(state.framesIngested).toBe(0);
     expect(state.transcriptsIngested).toBe(0);
+    expect(state.ttsIngested).toBe(0);
     expect(state.latestFrame()).toBeUndefined();
     expect(state.latestTranscript()).toBeUndefined();
+    expect(state.latestTts()).toBeUndefined();
   });
 
   it("uptimeS returns a non-negative number", () => {
@@ -152,5 +160,30 @@ describe("RelayState", () => {
     }
     expect(state.transcripts.length).toBe(500);
     expect(state.transcriptsIngested).toBe(510);
+  });
+
+  it("tracks TTS ingestion count", () => {
+    state.addTts(makeTts("1", "hello"));
+    state.addTts(makeTts("2", "world"));
+    expect(state.ttsIngested).toBe(2);
+  });
+
+  it("returns latest TTS message", () => {
+    state.addTts(makeTts("1", "first"));
+    state.addTts(makeTts("2", "second"));
+    expect(state.latestTts()?.text).toBe("second");
+  });
+
+  it("returns undefined when no TTS messages", () => {
+    expect(state.latestTts()).toBeUndefined();
+  });
+
+  it("respects TTS ring buffer capacity of 50", () => {
+    for (let i = 0; i < 55; i++) {
+      state.addTts(makeTts(`t${i}`, `text-${i}`));
+    }
+    expect(state.ttsMessages.length).toBe(50);
+    expect(state.ttsIngested).toBe(55);
+    expect(state.latestTts()?.id).toBe("t54");
   });
 });

@@ -1,4 +1,4 @@
-import { TranscriptSegment, FrameEntry, FrameMeta } from "./types";
+import { TranscriptSegment, FrameEntry, FrameMeta, WsTtsMessage } from "./types";
 
 export class RingBuffer<T> {
   private buffer: T[] = [];
@@ -39,9 +39,11 @@ export class RingBuffer<T> {
 export class RelayState {
   readonly frames = new RingBuffer<FrameEntry>(30);
   readonly transcripts = new RingBuffer<TranscriptSegment>(500);
+  readonly ttsMessages = new RingBuffer<WsTtsMessage>(50);
 
   private _framesIngested = 0;
   private _transcriptsIngested = 0;
+  private _ttsIngested = 0;
   private readonly _startTime = Date.now();
 
   get framesIngested(): number {
@@ -50,6 +52,10 @@ export class RelayState {
 
   get transcriptsIngested(): number {
     return this._transcriptsIngested;
+  }
+
+  get ttsIngested(): number {
+    return this._ttsIngested;
   }
 
   get uptimeS(): number {
@@ -64,6 +70,15 @@ export class RelayState {
   addTranscript(segment: TranscriptSegment): void {
     this.transcripts.push(segment);
     this._transcriptsIngested++;
+  }
+
+  addTts(msg: WsTtsMessage): void {
+    this.ttsMessages.push(msg);
+    this._ttsIngested++;
+  }
+
+  latestTts(): WsTtsMessage | undefined {
+    return this.ttsMessages.latest();
   }
 
   latestFrame(): FrameEntry | undefined {
@@ -85,8 +100,10 @@ export class RelayState {
   reset(): void {
     this.frames.clear();
     this.transcripts.clear();
+    this.ttsMessages.clear();
     this._framesIngested = 0;
     this._transcriptsIngested = 0;
+    this._ttsIngested = 0;
   }
 }
 

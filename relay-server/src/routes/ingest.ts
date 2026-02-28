@@ -2,9 +2,9 @@ import { Router, Request, Response, NextFunction } from "express";
 import multer, { MulterError } from "multer";
 import { v4 as uuidv4 } from "uuid";
 import { state } from "../state";
-import { broadcastFrame, broadcastTranscript } from "../ws/handler";
+import { broadcastFrame, broadcastTranscript, broadcastTts } from "../ws/handler";
 import { forwardTranscript } from "../forward/polymarket";
-import { FrameEntry, WsFrameMessage, WsTranscriptMessage, TranscriptSegment } from "../types";
+import { FrameEntry, WsFrameMessage, WsTranscriptMessage, WsTtsMessage, TranscriptSegment } from "../types";
 
 const router = Router();
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 5 * 1024 * 1024 } });
@@ -72,6 +72,26 @@ router.post("/transcript", (req, res) => {
   forwardTranscript(text);
 
   res.status(200).json(segment);
+});
+
+// POST /ingest/tts — JSON body
+router.post("/tts", (req, res) => {
+  const { text } = req.body;
+
+  if (!text || typeof text !== "string") {
+    res.status(400).json({ error: "Field 'text' is required and must be a string." });
+    return;
+  }
+
+  const id = uuidv4().slice(0, 8);
+  const timestamp = Date.now();
+
+  const msg: WsTtsMessage = { type: "tts", id, text, timestamp };
+
+  state.addTts(msg);
+  broadcastTts(msg);
+
+  res.status(200).json({ id, text, timestamp });
 });
 
 // Catch multer errors (wrong field name, file too large) and return 400 instead of 500

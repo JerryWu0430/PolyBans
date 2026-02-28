@@ -23,6 +23,8 @@ describe("REST endpoints", () => {
       expect(res.body.uptimeS).toBeGreaterThanOrEqual(0);
       expect(res.body).toHaveProperty("frameSubscribers");
       expect(res.body).toHaveProperty("transcriptSubscribers");
+      expect(res.body).toHaveProperty("ttsSubscribers");
+      expect(res.body).toHaveProperty("ttsIngested");
     });
   });
 
@@ -122,6 +124,51 @@ describe("REST endpoints", () => {
         .attach("frame", Buffer.from("a"), "a.jpg");
       const health = await request(app).get("/health");
       expect(health.body.framesIngested).toBe(1);
+    });
+  });
+
+  describe("POST /ingest/tts", () => {
+    it("accepts valid TTS text", async () => {
+      const res = await request(app)
+        .post("/ingest/tts")
+        .send({ text: "Hello from glasses" });
+      expect(res.status).toBe(200);
+      expect(res.body.text).toBe("Hello from glasses");
+      expect(res.body.id).toHaveLength(8);
+      expect(res.body.timestamp).toBeTypeOf("number");
+    });
+
+    it("rejects missing text", async () => {
+      const res = await request(app)
+        .post("/ingest/tts")
+        .send({});
+      expect(res.status).toBe(400);
+      expect(res.body.error).toContain("text");
+    });
+
+    it("rejects non-string text", async () => {
+      const res = await request(app)
+        .post("/ingest/tts")
+        .send({ text: 123 });
+      expect(res.status).toBe(400);
+    });
+
+    it("rejects empty text", async () => {
+      const res = await request(app)
+        .post("/ingest/tts")
+        .send({ text: "" });
+      expect(res.status).toBe(400);
+    });
+
+    it("increments health counters", async () => {
+      await request(app)
+        .post("/ingest/tts")
+        .send({ text: "one" });
+      await request(app)
+        .post("/ingest/tts")
+        .send({ text: "two" });
+      const health = await request(app).get("/health");
+      expect(health.body.ttsIngested).toBe(2);
     });
   });
 
