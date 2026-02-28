@@ -9,7 +9,7 @@ struct ContentView: View {
     @ObservedObject var vm: PolyBansSessionViewModel
 
     // Mac's local IP — relay-server runs here on port 8420
-    private let relayHost = "10.1.92.4"
+    private let relayHost = "192.168.1.232"
     private let relayPort = 8420
 
     var body: some View {
