@@ -1,9 +1,17 @@
 "use client";
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import {
+  Brain,
+  TrendingUp,
+  TrendingDown,
+  Minus,
+  Search,
+  Sparkles,
+  Loader2,
+  Lightbulb,
+} from "lucide-react";
 import type { AnalysisResult, ExtractedEntity } from "@/lib/types/analysis";
 
 interface AnalysisOverlayProps {
@@ -20,166 +28,179 @@ export function AnalysisOverlay({
   className,
 }: AnalysisOverlayProps) {
   return (
-    <Card className={cn("", className)}>
-      <CardHeader className="pb-2">
-        <div className="flex items-center justify-between">
-          <CardTitle className="text-sm font-medium">Analysis</CardTitle>
-          {analysis && (
-            <ConfidenceIndicator confidence={analysis.confidence} />
-          )}
+    <div
+      className={cn(
+        "rounded-xl border border-border/50 bg-card overflow-hidden",
+        className
+      )}
+    >
+      {/* Header */}
+      <div className="flex items-center justify-between px-4 py-2.5 border-b border-border/50 bg-muted/30">
+        <div className="flex items-center gap-2">
+          <Brain className="h-4 w-4 text-muted-foreground" />
+          <span className="text-sm font-medium">Analysis</span>
         </div>
-      </CardHeader>
-      <CardContent className="space-y-4">
+        {analysis && <ConfidenceMeter confidence={analysis.confidence} />}
+      </div>
+
+      {/* Content */}
+      <div className="p-4">
         {isLoading ? (
           <LoadingState />
         ) : analysis ? (
-          <>
-            {/* Sentiment & Summary */}
-            <div className="space-y-2">
-              <div className="flex items-center gap-2">
-                <SentimentBadge sentiment={analysis.sentiment} />
-                <span className="text-xs text-muted-foreground">
-                  {(analysis.confidence * 100).toFixed(0)}% confidence
-                </span>
+          <div className="space-y-4">
+            {/* Sentiment & Summary row */}
+            <div className="flex items-start gap-4">
+              <SentimentIndicator sentiment={analysis.sentiment} />
+              <div className="flex-1 min-w-0">
+                <p className="text-sm leading-relaxed text-foreground/90">
+                  {analysis.summary || "Analysis complete. Market signals detected."}
+                </p>
               </div>
-              <p className="text-sm text-muted-foreground leading-relaxed">
-                {analysis.summary}
-              </p>
             </div>
 
-            {/* Extracted Entities */}
+            {/* Entities */}
             {analysis.entities.length > 0 && (
               <div className="space-y-2">
-                <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-                  Entities
-                </h4>
+                <div className="flex items-center gap-1.5">
+                  <Sparkles className="h-3 w-3 text-muted-foreground" />
+                  <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                    Detected Entities
+                  </span>
+                </div>
                 <div className="flex flex-wrap gap-1.5">
                   {analysis.entities.map((entity, idx) => (
-                    <EntityBadge key={`${entity.name}-${idx}`} entity={entity} />
+                    <EntityChip key={`${entity.name}-${idx}`} entity={entity} />
                   ))}
                 </div>
               </div>
             )}
 
-            {/* Suggested Queries */}
+            {/* Suggested Markets */}
             {analysis.suggestedQueries.length > 0 && (
               <div className="space-y-2">
-                <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-                  Suggested Markets
-                </h4>
-                <div className="flex flex-wrap gap-1.5">
+                <div className="flex items-center gap-1.5">
+                  <Search className="h-3 w-3 text-muted-foreground" />
+                  <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                    Market Queries
+                  </span>
+                </div>
+                <div className="flex flex-wrap gap-2">
                   {analysis.suggestedQueries.map((query, idx) => (
                     <Button
                       key={idx}
                       variant="outline"
                       size="sm"
-                      className="h-7 text-xs"
+                      className="h-8 text-xs gap-1.5 bg-primary/5 border-primary/20 hover:bg-primary/10 hover:border-primary/30"
                       onClick={() => onQueryClick?.(query)}
                     >
+                      <Search className="h-3 w-3" />
                       {query}
                     </Button>
                   ))}
                 </div>
               </div>
             )}
-          </>
+          </div>
         ) : (
           <EmptyState />
         )}
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }
 
-function SentimentBadge({
+function SentimentIndicator({
   sentiment,
 }: {
   sentiment: "bullish" | "bearish" | "neutral";
 }) {
   const config = {
     bullish: {
-      variant: "default" as const,
-      className: "bg-green-600 hover:bg-green-600",
-      icon: "trending-up",
+      icon: TrendingUp,
+      label: "Bullish",
+      bgClass: "bg-chart-4/15",
+      textClass: "text-chart-4",
+      borderClass: "border-chart-4/30",
     },
     bearish: {
-      variant: "destructive" as const,
-      className: "",
-      icon: "trending-down",
+      icon: TrendingDown,
+      label: "Bearish",
+      bgClass: "bg-destructive/15",
+      textClass: "text-destructive",
+      borderClass: "border-destructive/30",
     },
     neutral: {
-      variant: "secondary" as const,
-      className: "",
-      icon: "minus",
+      icon: Minus,
+      label: "Neutral",
+      bgClass: "bg-muted",
+      textClass: "text-muted-foreground",
+      borderClass: "border-border",
     },
   };
 
-  const { variant, className, icon } = config[sentiment];
+  const { icon: Icon, label, bgClass, textClass, borderClass } = config[sentiment];
 
   return (
-    <Badge variant={variant} className={className}>
-      {icon === "trending-up" && (
-        <svg className="w-3 h-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-        </svg>
+    <div
+      className={cn(
+        "flex items-center gap-2 px-3 py-1.5 rounded-lg border shrink-0",
+        bgClass,
+        borderClass
       )}
-      {icon === "trending-down" && (
-        <svg className="w-3 h-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6" />
-        </svg>
-      )}
-      {icon === "minus" && (
-        <svg className="w-3 h-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" />
-        </svg>
-      )}
-      {sentiment.charAt(0).toUpperCase() + sentiment.slice(1)}
-    </Badge>
+    >
+      <Icon className={cn("h-4 w-4", textClass)} />
+      <span className={cn("text-sm font-medium", textClass)}>{label}</span>
+    </div>
   );
 }
 
-function EntityBadge({ entity }: { entity: ExtractedEntity }) {
-  const typeColors: Record<string, string> = {
-    team: "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200",
-    candidate: "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200",
-    event: "bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200",
-    company: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200",
-    other: "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200",
+function EntityChip({ entity }: { entity: ExtractedEntity }) {
+  const typeConfig: Record<string, { bg: string; text: string }> = {
+    team: { bg: "bg-chart-1/15", text: "text-chart-1" },
+    candidate: { bg: "bg-chart-5/15", text: "text-chart-5" },
+    event: { bg: "bg-chart-2/15", text: "text-chart-2" },
+    company: { bg: "bg-chart-4/15", text: "text-chart-4" },
+    other: { bg: "bg-muted", text: "text-muted-foreground" },
   };
 
-  const colorClass = typeColors[entity.type] || typeColors.other;
+  const { bg, text } = typeConfig[entity.type] || typeConfig.other;
 
   return (
     <span
       className={cn(
-        "inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium",
-        colorClass
+        "inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-medium",
+        bg,
+        text
       )}
-      title={`Relevance: ${(entity.relevance * 100).toFixed(0)}%`}
     >
       {entity.name}
       {entity.relevance >= 0.8 && (
-        <span className="ml-1 text-[10px] opacity-60">*</span>
+        <span className="opacity-60">•</span>
       )}
     </span>
   );
 }
 
-function ConfidenceIndicator({ confidence }: { confidence: number }) {
-  const percentage = confidence * 100;
-  const color =
-    percentage >= 70 ? "bg-green-500" : percentage >= 40 ? "bg-yellow-500" : "bg-red-500";
+function ConfidenceMeter({ confidence }: { confidence: number }) {
+  const percentage = Math.round(confidence * 100);
+  const barColor =
+    percentage >= 70
+      ? "bg-chart-4"
+      : percentage >= 40
+      ? "bg-chart-2"
+      : "bg-destructive";
 
   return (
-    <div className="flex items-center gap-1.5">
-      <div className="w-16 h-1.5 bg-muted rounded-full overflow-hidden">
+    <div className="flex items-center gap-2">
+      <div className="w-20 h-1.5 bg-muted rounded-full overflow-hidden">
         <div
-          className={cn("h-full rounded-full transition-all", color)}
+          className={cn("h-full rounded-full transition-all duration-500", barColor)}
           style={{ width: `${percentage}%` }}
         />
       </div>
-      <span className="text-[10px] text-muted-foreground font-mono">
-        {percentage.toFixed(0)}%
+      <span className="text-xs font-mono text-muted-foreground tabular-nums">
+        {percentage}%
       </span>
     </div>
   );
@@ -187,14 +208,24 @@ function ConfidenceIndicator({ confidence }: { confidence: number }) {
 
 function LoadingState() {
   return (
-    <div className="space-y-3">
-      <div className="flex items-center gap-2">
-        <div className="w-4 h-4 rounded-full border-2 border-primary border-t-transparent animate-spin" />
-        <span className="text-sm text-muted-foreground">Analyzing transcript...</span>
+    <div className="flex items-center gap-3 py-4">
+      <div className="w-10 h-10 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center">
+        <Loader2 className="h-5 w-5 text-primary animate-spin" />
       </div>
-      <div className="space-y-2">
-        <div className="h-4 bg-muted animate-pulse rounded w-3/4" />
-        <div className="h-4 bg-muted animate-pulse rounded w-1/2" />
+      <div className="flex-1">
+        <p className="text-sm font-medium">Processing transcript</p>
+        <p className="text-xs text-muted-foreground">
+          Analyzing for market signals...
+        </p>
+      </div>
+      <div className="flex gap-1">
+        {[0, 1, 2].map((i) => (
+          <div
+            key={i}
+            className="w-1.5 h-1.5 rounded-full bg-primary/40 animate-pulse"
+            style={{ animationDelay: `${i * 200}ms` }}
+          />
+        ))}
       </div>
     </div>
   );
@@ -202,26 +233,16 @@ function LoadingState() {
 
 function EmptyState() {
   return (
-    <div className="flex flex-col items-center justify-center py-8 text-center">
-      <svg
-        className="w-12 h-12 text-muted-foreground/30 mb-2"
-        fill="none"
-        viewBox="0 0 24 24"
-        stroke="currentColor"
-      >
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth={1.5}
-          d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"
-        />
-      </svg>
-      <p className="text-sm text-muted-foreground">
-        Waiting for enough transcript to analyze...
-      </p>
-      <p className="text-xs text-muted-foreground/60 mt-1">
-        Analysis triggers every ~30s of speech
-      </p>
+    <div className="flex items-center gap-4 py-6">
+      <div className="w-12 h-12 rounded-xl bg-muted/50 border border-border/50 flex items-center justify-center">
+        <Lightbulb className="h-5 w-5 text-muted-foreground/50" />
+      </div>
+      <div>
+        <p className="text-sm text-muted-foreground">Awaiting analysis</p>
+        <p className="text-xs text-muted-foreground/60 mt-0.5">
+          Triggers automatically after ~30s of speech
+        </p>
+      </div>
     </div>
   );
 }

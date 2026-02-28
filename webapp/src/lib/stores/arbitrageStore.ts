@@ -1,16 +1,26 @@
 import { create } from "zustand";
 import type { Market } from "../types/polymarket";
 import type { ArbitrageOpp } from "../websocket/types";
+import type { PolymarketMarket, PolymarketAnalysis } from "../types/polymarket-stream";
 
 interface ArbitrageFilters {
   minConfidence: number;
   minSpread: number;
 }
 
+interface BufferingState {
+  chars: number;
+  threshold: number;
+}
+
 interface ArbitrageState {
   opportunities: ArbitrageOpp[];
   selectedMarket: Market | null;
   filters: ArbitrageFilters;
+  streamedMarkets: PolymarketMarket[];
+  latestAnalysis: PolymarketAnalysis | null;
+  isBuffering: boolean;
+  bufferProgress: BufferingState | null;
 }
 
 interface ArbitrageActions {
@@ -19,6 +29,10 @@ interface ArbitrageActions {
   setSelectedMarket: (market: Market | null) => void;
   setFilters: (filters: Partial<ArbitrageFilters>) => void;
   clearOpportunities: () => void;
+  setStreamedMarkets: (markets: PolymarketMarket[]) => void;
+  setLatestAnalysis: (analysis: PolymarketAnalysis) => void;
+  setBuffering: (buffering: BufferingState | null) => void;
+  clearStreamedMarkets: () => void;
 }
 
 export const useArbitrageStore = create<ArbitrageState & ArbitrageActions>(
@@ -29,10 +43,13 @@ export const useArbitrageStore = create<ArbitrageState & ArbitrageActions>(
       minConfidence: 0,
       minSpread: 0,
     },
+    streamedMarkets: [],
+    latestAnalysis: null,
+    isBuffering: false,
+    bufferProgress: null,
 
     addOpportunity: (opp) =>
       set((state) => {
-        // Avoid duplicates
         if (state.opportunities.some((o) => o.id === opp.id)) {
           return state;
         }
@@ -52,6 +69,24 @@ export const useArbitrageStore = create<ArbitrageState & ArbitrageActions>(
       })),
 
     clearOpportunities: () => set({ opportunities: [] }),
+
+    setStreamedMarkets: (markets) => set({ streamedMarkets: markets }),
+
+    setLatestAnalysis: (analysis) => set({ latestAnalysis: analysis }),
+
+    setBuffering: (buffering) =>
+      set({
+        isBuffering: buffering !== null,
+        bufferProgress: buffering,
+      }),
+
+    clearStreamedMarkets: () =>
+      set({
+        streamedMarkets: [],
+        latestAnalysis: null,
+        isBuffering: false,
+        bufferProgress: null,
+      }),
   })
 );
 

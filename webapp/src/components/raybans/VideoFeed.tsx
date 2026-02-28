@@ -1,10 +1,9 @@
 "use client";
 
 import { useState, useCallback } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import { Video, Maximize2, Minimize2, Wifi, WifiOff } from "lucide-react";
 
 interface VideoFeedProps {
   frameUrl?: string;
@@ -30,104 +29,119 @@ export function VideoFeed({
   }, [isFullscreen, onFullscreenToggle]);
 
   return (
-    <Card className={cn("relative overflow-hidden", className)}>
-      <CardHeader className="pb-2">
-        <div className="flex items-center justify-between">
-          <CardTitle className="text-sm font-medium">Video Feed</CardTitle>
-          <div className="flex items-center gap-2">
-            <Badge variant={isConnected ? "default" : "secondary"}>
-              <span
-                className={cn(
-                  "mr-1.5 h-2 w-2 rounded-full",
-                  isConnected ? "bg-green-400 animate-pulse" : "bg-gray-400"
-                )}
-              />
-              {isConnected ? "Live" : "Disconnected"}
-            </Badge>
-            {isMock && (
-              <Badge variant="outline" className="text-xs">
-                Mock
-              </Badge>
-            )}
-          </div>
+    <div
+      className={cn(
+        "relative flex flex-col rounded-xl border border-border/50 bg-card overflow-hidden",
+        className
+      )}
+    >
+      {/* Header bar */}
+      <div className="flex items-center justify-between px-4 py-2.5 border-b border-border/50 bg-muted/30">
+        <div className="flex items-center gap-2">
+          <Video className="h-4 w-4 text-muted-foreground" />
+          <span className="text-sm font-medium">Video Feed</span>
         </div>
-      </CardHeader>
-      <CardContent className="p-2">
-        <div
-          className={cn(
-            "relative aspect-video bg-muted rounded-lg overflow-hidden",
-            isFullscreen && "fixed inset-0 z-50 rounded-none"
-          )}
-        >
-          {frameUrl && !imageError ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              key={frameUrl}
-              src={frameUrl}
-              alt="Ray-Bans video feed"
-              className="w-full h-full object-cover"
-              onError={() => setImageError(true)}
-            />
-          ) : (
-            <div className="absolute inset-0 flex flex-col items-center justify-center text-muted-foreground">
-              <svg
-                className="w-16 h-16 mb-2 opacity-50"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={1.5}
-                  d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"
-                />
-              </svg>
-              <span className="text-sm">
-                {isMock ? "Mock Mode - No Video Feed" : "Waiting for video..."}
-              </span>
-            </div>
-          )}
-
-          {/* Connection indicator overlay */}
-          <div className="absolute top-2 left-2">
-            <div
-              className={cn(
-                "w-3 h-3 rounded-full",
-                isConnected ? "bg-green-500 animate-pulse" : "bg-red-500"
-              )}
-            />
-          </div>
-
-          {/* Fullscreen toggle */}
-          <Button
-            variant="ghost"
-            size="sm"
-            className="absolute bottom-2 right-2 bg-black/50 hover:bg-black/70 text-white"
-            onClick={handleFullscreenToggle}
+        <div className="flex items-center gap-2">
+          {/* Status indicator */}
+          <div
+            className={cn(
+              "flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium",
+              isConnected
+                ? "bg-chart-4/15 text-chart-4"
+                : "bg-muted text-muted-foreground"
+            )}
           >
-            {isFullscreen ? (
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M6 18L18 6M6 6l12 12"
-                />
-              </svg>
+            {isConnected ? (
+              <>
+                <Wifi className="h-3 w-3" />
+                <span>Live</span>
+              </>
             ) : (
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"
-                />
-              </svg>
+              <>
+                <WifiOff className="h-3 w-3" />
+                <span>Offline</span>
+              </>
             )}
-          </Button>
+          </div>
+          {isMock && (
+            <span className="px-2 py-0.5 rounded text-[10px] font-mono uppercase tracking-wide bg-accent/50 text-accent-foreground">
+              Mock
+            </span>
+          )}
         </div>
-      </CardContent>
-    </Card>
+      </div>
+
+      {/* Video area */}
+      <div
+        className={cn(
+          "relative flex-1 bg-muted/50",
+          isFullscreen && "fixed inset-0 z-50 bg-background"
+        )}
+      >
+        {frameUrl && !imageError ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            key={frameUrl}
+            src={frameUrl}
+            alt="Ray-Bans video feed"
+            className="w-full h-full object-cover"
+            onError={() => setImageError(true)}
+          />
+        ) : (
+          <div className="absolute inset-0 flex flex-col items-center justify-center">
+            {/* Decorative grid pattern */}
+            <div
+              className="absolute inset-0 opacity-[0.03]"
+              style={{
+                backgroundImage: `
+                  linear-gradient(to right, currentColor 1px, transparent 1px),
+                  linear-gradient(to bottom, currentColor 1px, transparent 1px)
+                `,
+                backgroundSize: "24px 24px",
+              }}
+            />
+
+            {/* Centered content */}
+            <div className="relative flex flex-col items-center gap-3">
+              <div className="w-16 h-16 rounded-2xl bg-muted/80 border border-border/50 flex items-center justify-center">
+                <Video className="h-7 w-7 text-muted-foreground/50" strokeWidth={1.5} />
+              </div>
+              <div className="text-center">
+                <p className="text-sm text-muted-foreground">
+                  {isMock ? "Mock Mode Active" : "Awaiting Feed"}
+                </p>
+                <p className="text-xs text-muted-foreground/60 mt-0.5">
+                  {isMock ? "Video stream simulated" : "Connect your device"}
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Live indicator overlay */}
+        {isConnected && (
+          <div className="absolute top-3 left-3 flex items-center gap-1.5 px-2 py-1 rounded-md bg-black/60 backdrop-blur-sm">
+            <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse-live" />
+            <span className="text-[10px] font-mono text-white/90 uppercase tracking-wider">
+              REC
+            </span>
+          </div>
+        )}
+
+        {/* Fullscreen toggle */}
+        <Button
+          variant="ghost"
+          size="icon"
+          className="absolute bottom-3 right-3 h-8 w-8 bg-black/40 hover:bg-black/60 text-white/80 hover:text-white backdrop-blur-sm border border-white/10"
+          onClick={handleFullscreenToggle}
+        >
+          {isFullscreen ? (
+            <Minimize2 className="h-4 w-4" />
+          ) : (
+            <Maximize2 className="h-4 w-4" />
+          )}
+        </Button>
+      </div>
+    </div>
   );
 }
