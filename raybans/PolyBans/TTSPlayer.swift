@@ -69,34 +69,6 @@ final class TTSPlayer: NSObject, AVAudioPlayerDelegate {
 
     // MARK: - Private
 
-    private func configureAudioSession() {
-        let session = AVAudioSession.sharedInstance()
-        do {
-            try session.setCategory(
-                .playAndRecord,
-                mode: .default,
-                options: [.allowBluetoothA2DP, .defaultToSpeaker, .mixWithOthers]
-            )
-            try session.setActive(true, options: .notifyOthersOnDeactivation)
-            routeToBluetoothIfAvailable(session)
-        } catch {
-            print("[TTSPlayer] Audio session setup failed: \(error)")
-        }
-    }
-
-    private func routeToBluetoothIfAvailable(_ session: AVAudioSession) {
-        guard let inputs = session.availableInputs else { return }
-        guard let bluetoothInput = inputs.first(where: {
-            $0.portType == .bluetoothHFP || $0.portType == .bluetoothLE
-        }) else { return }
-
-        do {
-            try session.setPreferredInput(bluetoothInput)
-        } catch {
-            print("[TTSPlayer] Failed to set Bluetooth preferred input: \(error)")
-        }
-    }
-
     private func playNext() {
         guard !isSpeaking, let text = queue.first else { return }
         queue.removeFirst()
@@ -157,7 +129,9 @@ final class TTSPlayer: NSObject, AVAudioPlayerDelegate {
 
     private func startPlayback(with data: Data) {
         do {
-            configureAudioSession()
+            // Don't reconfigure audio session - SpeechTranscriber already set up
+            // .playAndRecord which supports both mic input AND audio playback.
+            // Reconfiguring would disrupt the speech recognition audio engine.
             let player = try AVAudioPlayer(data: data)
             player.delegate = self
             player.prepareToPlay()
