@@ -15,6 +15,25 @@
 			</array>
 		</dict>
 	</array>
+	<key>ElevenLabsAPIKey</key>
+	<string></string>
+	<key>ElevenLabsModelID</key>
+	<string>eleven_v3</string>
+	<key>ElevenLabsOutputFormat</key>
+	<string>mp3_44100_128</string>
+	<key>ElevenLabsVoiceID</key>
+	<string>JBFqnCBsd6RMkjVDRZzb</string>
+	<key>MWDAT</key>
+	<dict>
+		<key>AppLinkURLScheme</key>
+		<string>polybans://</string>
+		<key>ClientToken</key>
+		<string>$(META_CLIENT_TOKEN)</string>
+		<key>MetaAppID</key>
+		<string>$(META_APP_ID)</string>
+		<key>TeamID</key>
+		<string>$(DEVELOPMENT_TEAM)</string>
+	</dict>
 	<key>NSAppTransportSecurity</key>
 	<dict>
 		<key>NSAllowsLocalNetworking</key>
@@ -28,6 +47,10 @@
 	<string>PolyBans needs the microphone to capture live audio for transcription.</string>
 	<key>NSSpeechRecognitionUsageDescription</key>
 	<string>PolyBans transcribes live audio to identify Polymarket betting opportunities.</string>
+	<key>RelayHost</key>
+	<string>172.20.10.3</string>
+	<key>RelayPort</key>
+	<integer>8420</integer>
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>bluetooth-peripheral</string>
@@ -37,16 +60,5 @@
 	<array>
 		<string>com.meta.ar.wearable</string>
 	</array>
-	<key>MWDAT</key>
-	<dict>
-		<key>AppLinkURLScheme</key>
-		<string>polybans://</string>
-		<key>ClientToken</key>
-		<string>$(META_CLIENT_TOKEN)</string>
-		<key>MetaAppID</key>
-		<string>$(META_APP_ID)</string>
-		<key>TeamID</key>
-		<string>$(DEVELOPMENT_TEAM)</string>
-	</dict>
 </dict>
 </plist>

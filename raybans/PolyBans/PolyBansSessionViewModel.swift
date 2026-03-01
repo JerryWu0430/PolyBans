@@ -62,7 +62,9 @@ final class PolyBansSessionViewModel: ObservableObject {
         // 0. Start TTS WebSocket listener
         Task {
             await client.setOnTtsReceived { [weak self] text in
-                self?.ttsPlayer.speak(text)
+                Task { @MainActor in
+                    self?.ttsPlayer.speak(text)
+                }
             }
             await client.startListening()
         }
@@ -72,7 +74,7 @@ final class PolyBansSessionViewModel: ObservableObject {
             do {
                 _ = try await client.health()
             } catch {
-                self.errorMessage = "Relay offline: \(error.localizedDescription)"
+                self.errorMessage = "Relay offline at \(host):\(port): \(error.localizedDescription)"
             }
         }
 
