@@ -149,16 +149,10 @@ final class PolyBansSessionViewModel: ObservableObject {
 
     // MARK: - Camera Lifecycle
 
-    /// Camera capture frame rate (from GlassesCameraManager StreamSessionConfig). Used to derive vision throttle.
-    private static let cameraFPS: Double = 24
-
-    /// Minimum seconds between vision requests (1 request every N seconds) to stay under API rate limits.
-    private static let visionRequestInterval: TimeInterval = 5.0
-
     func startCamera() {
         guard !cameraActive else { return }
         cameraActive = true
-        let throttler = FrameThrottler(interval: Self.visionRequestInterval)
+        let throttler = FrameThrottler(interval: 0.1)
         self.frameThrottler = throttler
 
         throttler.onThrottledFrame = { [weak self] image in
