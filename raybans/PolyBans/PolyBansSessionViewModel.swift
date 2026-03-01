@@ -28,7 +28,6 @@ final class PolyBansSessionViewModel: ObservableObject {
     /// Guards against piling up frame-push tasks when relay is slower than capture rate.
     private var framePushInFlight = false
 
-
     /// Timer that periodically flushes partial transcript to the relay (~5s)
     private var flushTimer: Timer?
     private var lastFlushedTranscript = ""
@@ -198,7 +197,7 @@ final class PolyBansSessionViewModel: ObservableObject {
     }
 
     func handleFrame(_ jpegData: Data) {
-        // Update preview when no push in flight
+        // Throttle preview — only decode when no push is in flight
         if !framePushInFlight {
             latestFrame = UIImage(data: jpegData)
         }
