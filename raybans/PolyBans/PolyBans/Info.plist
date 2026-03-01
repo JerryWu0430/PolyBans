@@ -22,7 +22,7 @@
 	<key>ElevenLabsOutputFormat</key>
 	<string>mp3_44100_128</string>
 	<key>ElevenLabsVoiceID</key>
-	<string>JBFqnCBsd6RMkjVDRZzb</string>
+	<string>h1IssowVS2h4nL5ZbkkK</string>
 	<key>MWDAT</key>
 	<dict>
 		<key>AppLinkURLScheme</key>
@@ -39,14 +39,6 @@
 		<key>NSAllowsLocalNetworking</key>
 		<true/>
 	</dict>
-	<key>NSBluetoothAlwaysUsageDescription</key>
-	<string>PolyBans connects to Meta smart glasses via Bluetooth.</string>
-	<key>NSCameraUsageDescription</key>
-	<string>PolyBans uses the camera to capture video frames for analysis.</string>
-	<key>NSMicrophoneUsageDescription</key>
-	<string>PolyBans needs the microphone to capture live audio for transcription.</string>
-	<key>NSSpeechRecognitionUsageDescription</key>
-	<string>PolyBans transcribes live audio to identify Polymarket betting opportunities.</string>
 	<key>RelayHost</key>
 	<string>172.20.10.3</string>
 	<key>RelayPort</key>
