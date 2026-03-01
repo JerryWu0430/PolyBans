@@ -3,8 +3,30 @@ import SwiftUI
 struct ContentView: View {
     @ObservedObject var vm: PolyBansSessionViewModel
 
-    private let relayHost = "192.168.1.232"
-    private let relayPort = 8420
+    // Reads from Info.plist first so values are editable in Xcode.
+    private var relayHost: String {
+        let infoValue = (Bundle.main.object(forInfoDictionaryKey: "RelayHost") as? String)?
+            .trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        if !infoValue.isEmpty { return infoValue }
+
+        let envValue = (ProcessInfo.processInfo.environment["RELAY_HOST"] ?? "")
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+        return envValue.isEmpty ? "172.20.10.3" : envValue
+    }
+
+    private var relayPort: Int {
+        if let number = Bundle.main.object(forInfoDictionaryKey: "RelayPort") as? NSNumber {
+            return number.intValue
+        }
+        if let text = Bundle.main.object(forInfoDictionaryKey: "RelayPort") as? String,
+           let port = Int(text) {
+            return port
+        }
+        if let envPort = Int(ProcessInfo.processInfo.environment["RELAY_PORT"] ?? "") {
+            return envPort
+        }
+        return 8420
+    }
 
     var body: some View {
         ZStack {

@@ -13,3 +13,4 @@ npm-debug.log*
 # Editor
 .vscode/
 .idea/
+Secrets.xcconfig

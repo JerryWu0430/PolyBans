@@ -1,0 +1,30 @@
+
+> polybans-relay-server@1.0.0 dev
+> tsx watch src/index.ts
+
+node:events:498
+      throw er; // Unhandled 'error' event
+      ^
+
+Error: listen EADDRINUSE: address already in use :::8420
+    at Server.setupListenHandle [as _listen2] (node:net:1904:16)
+    at listenInCluster (node:net:1961:12)
+    at Server.listen (node:net:2063:7)
+    at http (/Users/yusufafifi/Desktop/PolyBans/relay-server/src/index.ts:36:10)
+    at Object.<anonymous> (/Users/yusufafifi/Desktop/PolyBans/relay-server/src/index.ts:46:1)
+    at Module._compile (node:internal/modules/cjs/loader:1467:14)
+    at Object.transformer (/Users/yusufafifi/Desktop/PolyBans/relay-server/node_modules/tsx/dist/register-D46fvsV_.cjs:3:1104)
+    at Module.load (node:internal/modules/cjs/loader:1282:32)
+    at Module._load (node:internal/modules/cjs/loader:1098:12)
+    at TracingChannel.traceSync (node:diagnostics_channel:315:14)
+Emitted 'error' event on Server instance at:
+    at emitErrorNT (node:net:1940:8)
+    at process.processTicksAndRejections (node:internal/process/task_queues:82:21) {
+  code: 'EADDRINUSE',
+  errno: -48,
+  syscall: 'listen',
+  address: '::',
+  port: 8420
+}
+
+Node.js v22.4.1
