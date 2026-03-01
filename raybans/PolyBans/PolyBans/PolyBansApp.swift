@@ -16,20 +16,23 @@ struct PolyBansApp: App {
 
     var body: some Scene {
         WindowGroup {
-            ContentView(vm: vm)
-                .onOpenURL { url in
-                    guard
-                        let components = URLComponents(url: url, resolvingAgainstBaseURL: false),
-                        components.queryItems?.contains(where: { $0.name == "metaWearablesAction" }) == true
-                    else { return }
-                    Task {
-                        do {
-                            _ = try await Wearables.shared.handleUrl(url)
-                        } catch {
-                            NSLog("[PolyBans] handleUrl error: %@", "\(error)")
-                        }
+            NavigationStack {
+                ContentView(vm: vm)
+            }
+            .preferredColorScheme(.dark)
+            .onOpenURL { url in
+                guard
+                    let components = URLComponents(url: url, resolvingAgainstBaseURL: false),
+                    components.queryItems?.contains(where: { $0.name == "metaWearablesAction" }) == true
+                else { return }
+                Task {
+                    do {
+                        _ = try await Wearables.shared.handleUrl(url)
+                    } catch {
+                        NSLog("[PolyBans] handleUrl error: %@", "\(error)")
                     }
                 }
+            }
         }
     }
 }

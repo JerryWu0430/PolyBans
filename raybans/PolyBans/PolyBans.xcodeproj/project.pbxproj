@@ -18,6 +18,10 @@
 		AA000001AAAA000100000003 /* GlassesCameraManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA000001AAAA000100000007 /* GlassesCameraManager.swift */; };
 		AA000001AAAA000100000004 /* GlassesConnectionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA000001AAAA000100000008 /* GlassesConnectionView.swift */; };
 		CC000001CCCC000100000001 /* TTSPlayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC000001CCCC000100000002 /* TTSPlayer.swift */; };
+		DD000001DDDD000100000001 /* PolyBansTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD000001DDDD000100000005 /* PolyBansTheme.swift */; };
+		DD000001DDDD000100000002 /* GlassCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD000001DDDD000100000006 /* GlassCard.swift */; };
+		DD000001DDDD000100000003 /* PulsingDot.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD000001DDDD000100000007 /* PulsingDot.swift */; };
+		DD000001DDDD000100000004 /* GradientButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD000001DDDD000100000008 /* GradientButton.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -50,6 +54,10 @@
 		AA000001AAAA000100000007 /* GlassesCameraManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlassesCameraManager.swift; sourceTree = "<group>"; };
 		AA000001AAAA000100000008 /* GlassesConnectionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlassesConnectionView.swift; sourceTree = "<group>"; };
 		CC000001CCCC000100000002 /* TTSPlayer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TTSPlayer.swift; sourceTree = "<group>"; };
+		DD000001DDDD000100000005 /* PolyBansTheme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PolyBansTheme.swift; sourceTree = "<group>"; };
+		DD000001DDDD000100000006 /* GlassCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlassCard.swift; sourceTree = "<group>"; };
+		DD000001DDDD000100000007 /* PulsingDot.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PulsingDot.swift; sourceTree = "<group>"; };
+		DD000001DDDD000100000008 /* GradientButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GradientButton.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -120,6 +128,7 @@
 				8D7D240D2F534CC100E8C995 /* RelayModels.swift */,
 				AA000001AAAA00010000000D /* Vision */,
 				AA000001AAAA00010000000E /* Views */,
+				DD000001DDDD00010000000F /* Theme */,
 				8D7D23DF2F53280600E8C995 /* PolyBans */,
 				8D7D23F12F53280700E8C995 /* PolyBansTests */,
 				8D7D23FB2F53280700E8C995 /* PolyBansUITests */,
@@ -153,6 +162,17 @@
 				AA000001AAAA000100000008 /* GlassesConnectionView.swift */,
 			);
 			path = Views;
+			sourceTree = "<group>";
+		};
+		DD000001DDDD00010000000F /* Theme */ = {
+			isa = PBXGroup;
+			children = (
+				DD000001DDDD000100000005 /* PolyBansTheme.swift */,
+				DD000001DDDD000100000006 /* GlassCard.swift */,
+				DD000001DDDD000100000007 /* PulsingDot.swift */,
+				DD000001DDDD000100000008 /* GradientButton.swift */,
+			);
+			path = Theme;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -313,6 +333,10 @@
 				AA000001AAAA000100000003 /* GlassesCameraManager.swift in Sources */,
 				AA000001AAAA000100000004 /* GlassesConnectionView.swift in Sources */,
 				CC000001CCCC000100000001 /* TTSPlayer.swift in Sources */,
+				DD000001DDDD000100000001 /* PolyBansTheme.swift in Sources */,
+				DD000001DDDD000100000002 /* GlassCard.swift in Sources */,
+				DD000001DDDD000100000003 /* PulsingDot.swift in Sources */,
+				DD000001DDDD000100000004 /* GradientButton.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

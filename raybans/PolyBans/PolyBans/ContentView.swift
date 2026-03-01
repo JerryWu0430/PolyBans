@@ -1,115 +1,194 @@
-//
-//  ContentView.swift
-//  PolyBans
-//
-
 import SwiftUI
 
 struct ContentView: View {
     @ObservedObject var vm: PolyBansSessionViewModel
 
-    // Mac's local IP — relay-server runs here on port 8420
     private let relayHost = "192.168.1.232"
     private let relayPort = 8420
 
     var body: some View {
-        NavigationView {
-            VStack(spacing: 24) {
+        ZStack {
+            // MARK: - Background
+            LinearGradient(
+                colors: [
+                    PolyBansTheme.backgroundPrimary,
+                    PolyBansTheme.backgroundSecondary,
+                    PolyBansTheme.backgroundPrimary
+                ],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+            .ignoresSafeArea()
 
-                // MARK: Camera Preview
-                if let frame = vm.latestFrame {
-                    Image(uiImage: frame)
-                        .resizable()
-                        .scaledToFit()
-                        .frame(maxHeight: 200)
-                        .clipShape(RoundedRectangle(cornerRadius: 8))
-                } else if vm.cameraActive {
-                    VStack {
-                        ProgressView()
-                        Text("Waiting for frames…")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
+            VStack(spacing: 0) {
+                ScrollView {
+                    VStack(spacing: 16) {
+                        // MARK: - Header
+                        HStack {
+                            Text("PolyBans")
+                                .font(.largeTitle.bold())
+                                .foregroundStyle(.white)
+
+                            Spacer()
+
+                            NavigationLink {
+                                GlassesConnectionView(glasses: vm.glassesManager)
+                            } label: {
+                                Image(systemName: "eyeglasses")
+                                    .font(.title2)
+                                    .foregroundStyle(PolyBansTheme.accent)
+                                    .padding(10)
+                                    .background(
+                                        Circle()
+                                            .fill(PolyBansTheme.backgroundCard.opacity(0.6))
+                                    )
+                                    .overlay(
+                                        Circle()
+                                            .stroke(PolyBansTheme.cardBorderGradient, lineWidth: 1)
+                                    )
+                            }
+                        }
+                        .padding(.horizontal)
+                        .padding(.top, 8)
+
+                        // MARK: - Status Row
+                        HStack(spacing: 20) {
+                            StatusPill(
+                                label: "Relay",
+                                isActive: vm.relayConnected
+                            )
+                            StatusPill(
+                                label: "Glasses",
+                                isActive: vm.glassesManager.isConnected
+                            )
+                        }
+                        .frame(maxWidth: .infinity)
+                        .glassCard()
+                        .padding(.horizontal)
+
+                        // MARK: - Camera Preview
+                        VStack(spacing: 12) {
+                            if let frame = vm.latestFrame {
+                                Image(uiImage: frame)
+                                    .resizable()
+                                    .scaledToFit()
+                                    .frame(maxHeight: 200)
+                                    .clipShape(RoundedRectangle(cornerRadius: PolyBansTheme.cornerRadiusSmall))
+                            } else if vm.cameraActive {
+                                VStack(spacing: 8) {
+                                    ProgressView()
+                                        .tint(PolyBansTheme.accent)
+                                    Text("Waiting for frames...")
+                                        .font(.caption)
+                                        .foregroundStyle(PolyBansTheme.textSecondary)
+                                }
+                                .frame(maxWidth: .infinity, minHeight: 120)
+                            } else {
+                                VStack(spacing: 8) {
+                                    Image(systemName: "video.slash")
+                                        .font(.title)
+                                        .foregroundStyle(PolyBansTheme.textSecondary)
+                                    Text("Camera off")
+                                        .font(.caption)
+                                        .foregroundStyle(PolyBansTheme.textSecondary)
+                                }
+                                .frame(maxWidth: .infinity, minHeight: 120)
+                            }
+
+                            Button {
+                                if vm.cameraActive {
+                                    vm.stopCamera()
+                                } else {
+                                    vm.startCamera()
+                                }
+                            } label: {
+                                Label(
+                                    vm.cameraActive ? "Stop Camera" : "Start Camera",
+                                    systemImage: vm.cameraActive ? "video.slash.fill" : "video.fill"
+                                )
+                                .font(.subheadline.bold())
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 10)
+                                .foregroundStyle(vm.cameraActive ? PolyBansTheme.statusAmber : PolyBansTheme.accent)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: PolyBansTheme.cornerRadiusSmall)
+                                        .stroke(
+                                            vm.cameraActive ? PolyBansTheme.statusAmber : PolyBansTheme.accent,
+                                            lineWidth: 1.5
+                                        )
+                                )
+                            }
+                        }
+                        .glassCard()
+                        .padding(.horizontal)
+
+                        // MARK: - Live Transcript
+                        VStack(alignment: .leading, spacing: 10) {
+                            HStack(spacing: 6) {
+                                Image(systemName: "waveform")
+                                    .foregroundStyle(PolyBansTheme.accent)
+                                Text("Live Transcript")
+                                    .font(.subheadline.bold())
+                                    .foregroundStyle(PolyBansTheme.textPrimary)
+                            }
+
+                            Text(vm.userTranscript.isEmpty ? "Waiting for speech..." : vm.userTranscript)
+                                .font(.body)
+                                .foregroundStyle(
+                                    vm.userTranscript.isEmpty
+                                        ? PolyBansTheme.textSecondary
+                                        : PolyBansTheme.textPrimary
+                                )
+                                .frame(maxWidth: .infinity, minHeight: 80, alignment: .topLeading)
+                        }
+                        .glassCard()
+                        .padding(.horizontal)
+
+                        // MARK: - Stats Row
+                        HStack(spacing: 12) {
+                            StatCard(
+                                icon: "text.bubble",
+                                value: "\(vm.transcriptsSent)",
+                                label: "Transcripts"
+                            )
+                            StatCard(
+                                icon: "camera.viewfinder",
+                                value: "\(vm.framesSent)",
+                                label: "Frames"
+                            )
+                        }
+                        .padding(.horizontal)
+
+                        // MARK: - Error Banner
+                        if let error = vm.errorMessage {
+                            HStack(spacing: 8) {
+                                Image(systemName: "exclamationmark.triangle.fill")
+                                    .foregroundStyle(PolyBansTheme.statusRed)
+                                Text(error)
+                                    .font(.caption)
+                                    .foregroundStyle(PolyBansTheme.statusRed)
+                            }
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .glassCard()
+                            .padding(.horizontal)
+                        }
                     }
-                    .frame(maxHeight: 200)
+                    .padding(.bottom, 100)
                 }
 
-                // MARK: Camera Button
-                Button {
-                    if vm.cameraActive {
-                        vm.stopCamera()
-                    } else {
-                        vm.startCamera()
-                    }
-                } label: {
-                    Label(
-                        vm.cameraActive ? "Stop Camera" : "Start Camera",
-                        systemImage: vm.cameraActive ? "video.slash.fill" : "video.fill"
-                    )
-                    .font(.subheadline.bold())
-                    .frame(maxWidth: .infinity)
-                    .padding(10)
-                    .background(vm.cameraActive ? Color.orange : Color.teal)
-                    .foregroundStyle(.white)
-                    .clipShape(RoundedRectangle(cornerRadius: 10))
-                }
-                .padding(.horizontal)
+                Spacer(minLength: 0)
+            }
 
-                // MARK: Glasses
-                NavigationLink {
-                    GlassesConnectionView(glasses: vm.glassesManager)
-                } label: {
-                    Label("Meta Glasses", systemImage: "eyeglasses")
-                }
-
-                // MARK: Status
-                HStack(spacing: 8) {
-                    Circle()
-                        .fill(vm.relayConnected ? Color.green : Color.red)
-                        .frame(width: 10, height: 10)
-                    Text(vm.relayConnected ? "Relay connected" : "Relay disconnected")
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                }
-
-                // MARK: Transcript
-                GroupBox("Live Transcript") {
-                    Text(vm.userTranscript.isEmpty ? "Waiting for speech…" : vm.userTranscript)
-                        .font(.body)
-                        .foregroundStyle(vm.userTranscript.isEmpty ? .secondary : .primary)
-                        .frame(maxWidth: .infinity, minHeight: 100, alignment: .topLeading)
-                        .padding(4)
-                }
-
-                // MARK: Counters
-                HStack(spacing: 32) {
-                    VStack {
-                        Text("\(vm.transcriptsSent)")
-                            .font(.title2.bold())
-                        Text("Transcripts")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                    }
-                    VStack {
-                        Text("\(vm.framesSent)")
-                            .font(.title2.bold())
-                        Text("Frames")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                    }
-                }
-
-                // MARK: Error
-                if let error = vm.errorMessage {
-                    Text(error)
-                        .font(.caption)
-                        .foregroundStyle(.red)
-                        .multilineTextAlignment(.center)
-                }
-
+            // MARK: - Floating Session Button
+            VStack {
                 Spacer()
-
-                // MARK: Start / Stop Session
-                Button {
+                GradientButton(
+                    title: vm.isActive ? "Stop Session" : "Start Session",
+                    icon: vm.isActive ? "stop.circle.fill" : "mic.circle.fill",
+                    gradient: vm.isActive
+                        ? PolyBansTheme.sessionActiveGradient
+                        : PolyBansTheme.sessionInactiveGradient
+                ) {
                     Task { @MainActor in
                         if vm.isActive {
                             vm.stopSession()
@@ -117,26 +196,58 @@ struct ContentView: View {
                             await vm.startSession(host: relayHost, port: relayPort)
                         }
                     }
-                } label: {
-                    Label(
-                        vm.isActive ? "Stop Session" : "Start Session",
-                        systemImage: vm.isActive ? "stop.circle.fill" : "mic.circle.fill"
-                    )
-                    .font(.headline)
-                    .frame(maxWidth: .infinity)
-                    .padding()
-                    .background(vm.isActive ? Color.red : Color.blue)
-                    .foregroundStyle(.white)
-                    .clipShape(RoundedRectangle(cornerRadius: 12))
                 }
                 .padding(.horizontal)
+                .padding(.bottom, 8)
             }
-            .padding()
-            .navigationTitle("PolyBans")
+        }
+        .navigationBarHidden(true)
+    }
+}
+
+// MARK: - StatusPill
+
+private struct StatusPill: View {
+    let label: String
+    let isActive: Bool
+
+    var body: some View {
+        HStack(spacing: 6) {
+            PulsingDot(isActive: isActive)
+            Text(label)
+                .font(.subheadline)
+                .foregroundStyle(PolyBansTheme.textSecondary)
         }
     }
 }
 
+// MARK: - StatCard
+
+private struct StatCard: View {
+    let icon: String
+    let value: String
+    let label: String
+
+    var body: some View {
+        VStack(spacing: 6) {
+            Image(systemName: icon)
+                .font(.title3)
+                .foregroundStyle(PolyBansTheme.accent)
+            Text(value)
+                .font(.title2.bold())
+                .foregroundStyle(PolyBansTheme.textPrimary)
+            Text(label)
+                .font(.caption)
+                .foregroundStyle(PolyBansTheme.textSecondary)
+        }
+        .frame(maxWidth: .infinity)
+        .glassCard()
+    }
+}
+
 #Preview {
-    ContentView(vm: PolyBansSessionViewModel())
+    NavigationStack {
+        ContentView(vm: PolyBansSessionViewModel())
+    }
+    .preferredColorScheme(.dark)
 }
