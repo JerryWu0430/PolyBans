@@ -152,7 +152,7 @@ final class PolyBansSessionViewModel: ObservableObject {
     func startCamera() {
         guard !cameraActive else { return }
         cameraActive = true
-        let throttler = FrameThrottler(interval: 1.0)
+        let throttler = FrameThrottler(interval: 0.1)
         self.frameThrottler = throttler
 
         throttler.onThrottledFrame = { [weak self] image in
