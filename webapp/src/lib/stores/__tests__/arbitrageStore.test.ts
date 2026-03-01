@@ -79,7 +79,7 @@ describe("arbitrageStore", () => {
       streamedMarkets: [{ id: "m1" }] as never[],
       latestAnalysis: { detected: true } as never,
       isBuffering: true,
-      bufferProgress: { chars: 100, threshold: 300 },
+      bufferProgress: { chars: 100, threshold: 100 },
     });
 
     useArbitrageStore.getState().clearStreamedMarkets();
@@ -102,11 +102,11 @@ describe("arbitrageStore", () => {
   });
 
   it("setBuffering updates isBuffering and bufferProgress", () => {
-    useArbitrageStore.getState().setBuffering({ chars: 150, threshold: 300 });
+    useArbitrageStore.getState().setBuffering({ chars: 50, threshold: 100 });
     expect(useArbitrageStore.getState().isBuffering).toBe(true);
     expect(useArbitrageStore.getState().bufferProgress).toEqual({
-      chars: 150,
-      threshold: 300,
+      chars: 50,
+      threshold: 100,
     });
 
     useArbitrageStore.getState().setBuffering(null);
