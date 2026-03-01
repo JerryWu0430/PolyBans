@@ -255,30 +255,43 @@ Provide strategic analysis. Which outcome has edge? What's undervalued?`,
  *
  * @param base64Jpeg - raw base64 JPEG string (no data: prefix needed)
  */
-export async function describeFrame(base64Jpeg: string): Promise<string> {
-  const response = await client.chat.complete({
-    model: "pixtral-12b-2409",
-    messages: [
-      {
-        role: "user",
-        content: [
+export async function describeFrame(base64Jpeg: string, maxRetries = 2): Promise<string> {
+  let lastError: Error | null = null;
+
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      const response = await client.chat.complete({
+        model: "pixtral-12b-2409",
+        messages: [
           {
-            type: "image_url",
-            imageUrl: {
-              url: `data:image/jpeg;base64,${base64Jpeg}`,
-            },
-          },
-          {
-            type: "text",
-            text: `Describe what is happening in this image in one short sentence (max 20 words, present tense). Focus on people, locations, activities, or events that might relate to sports, politics, or current affairs. Be specific and direct. No preamble.`,
+            role: "user",
+            content: [
+              {
+                type: "image_url",
+                imageUrl: {
+                  url: `data:image/jpeg;base64,${base64Jpeg}`,
+                },
+              },
+              {
+                type: "text",
+                text: `Describe what is happening in this image in one short sentence (max 20 words, present tense). Focus on people, locations, activities, or events that might relate to sports, politics, or current affairs. Be specific and direct. No preamble.`,
+              },
+            ],
           },
         ],
-      },
-    ],
-    temperature: 0.2,
-  });
+        temperature: 0.2,
+      });
 
-  const raw = response.choices?.[0]?.message?.content;
-  if (!raw || typeof raw !== "string") return "";
-  return cleanText(raw).replace(/^["']|["']$/g, ""); // strip surrounding quotes if any
+      const raw = response.choices?.[0]?.message?.content;
+      if (!raw || typeof raw !== "string") return "";
+      return cleanText(raw).replace(/^["']|["']$/g, ""); // strip surrounding quotes if any
+    } catch (err) {
+      lastError = err instanceof Error ? err : new Error(String(err));
+      const isRetryable = lastError.message.includes("502") || lastError.message.includes("503") || lastError.message.includes("fetch failed");
+      if (!isRetryable || attempt >= maxRetries) throw lastError;
+      // Exponential backoff: 500ms, 1500ms
+      await new Promise((r) => setTimeout(r, 500 * (attempt + 1)));
+    }
+  }
+  throw lastError ?? new Error("describeFrame failed");
 }
