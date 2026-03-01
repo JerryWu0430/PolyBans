@@ -28,6 +28,10 @@ final class PolyBansSessionViewModel: ObservableObject {
     /// Guards against piling up frame-push tasks when relay is slower than capture rate.
     private var framePushInFlight = false
 
+    /// Counter for vision analysis - only analyze every Nth frame
+    private var frameCounter = 0
+    private let visionFrameInterval = 50 // 1 analysis per 5 sec (10fps * 5s = 50 frames)
+
     /// Timer that periodically flushes partial transcript to the relay (~5s)
     private var flushTimer: Timer?
     private var lastFlushedTranscript = ""
@@ -152,7 +156,7 @@ final class PolyBansSessionViewModel: ObservableObject {
     func startCamera() {
         guard !cameraActive else { return }
         cameraActive = true
-        let throttler = FrameThrottler(interval: 5) // 2fps - avoid Mistral rate limits
+        let throttler = FrameThrottler(interval: 0.1)
         self.frameThrottler = throttler
 
         throttler.onThrottledFrame = { [weak self] image in
@@ -175,6 +179,7 @@ final class PolyBansSessionViewModel: ObservableObject {
         glassesManager.onFrameCaptured = nil
         frameThrottler?.onThrottledFrame = nil
         frameThrottler = nil
+        frameCounter = 0
         cameraActive = false
         latestFrame = nil
     }
@@ -197,10 +202,13 @@ final class PolyBansSessionViewModel: ObservableObject {
     }
 
     func handleFrame(_ jpegData: Data) {
-        // Throttle preview — only decode when no push is in flight
-        if !framePushInFlight {
-            latestFrame = UIImage(data: jpegData)
-        }
+        // Always update preview for smooth 10fps video
+        latestFrame = UIImage(data: jpegData)
+
+        // Only send every Nth frame for vision analysis (2 analyses/sec)
+        frameCounter += 1
+        guard frameCounter >= visionFrameInterval else { return }
+        frameCounter = 0
 
         // Drop frame if a push is already in flight (backpressure)
         guard let relay, !framePushInFlight else { return }
