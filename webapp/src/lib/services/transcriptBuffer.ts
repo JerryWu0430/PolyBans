@@ -5,7 +5,7 @@
  * are fully isolated.
  */
 
-export const MIN_CHARS_TO_PROCESS = 300; // ~30 sec of speech
+export const MIN_CHARS_TO_PROCESS = 100; // min chars before sending to analysis
 const CONTEXT_OVERLAP = 200; // keep last N chars on flush
 
 export interface AppendResult {

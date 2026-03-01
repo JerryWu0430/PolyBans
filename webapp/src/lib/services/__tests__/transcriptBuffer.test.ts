@@ -17,7 +17,7 @@ describe("TranscriptBuffer", () => {
     expect(text).toContain("world");
   });
 
-  it("reports ready when buffer reaches 300 char threshold", () => {
+  it("reports ready when buffer reaches 100 char threshold", () => {
     const shortResult = buffer.append("short");
     expect(shortResult.ready).toBe(false);
 
@@ -58,7 +58,7 @@ describe("TranscriptBuffer", () => {
 
   it("threshold getter returns MIN_CHARS_TO_PROCESS", () => {
     expect(buffer.threshold).toBe(MIN_CHARS_TO_PROCESS);
-    expect(buffer.threshold).toBe(300);
+    expect(buffer.threshold).toBe(100);
   });
 
   it("tracks charsBuffered accurately across multiple appends", () => {
