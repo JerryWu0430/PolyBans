@@ -4,13 +4,19 @@ import Foundation
 @MainActor
 final class TTSPlayer: NSObject, AVAudioPlayerDelegate {
     private let apiKey: String
-    private let voiceID: String
+    private let defaultVoiceID: String
     private let modelID: String
     private let outputFormat: String
 
     private var queue: [String] = []
     private var isSpeaking = false
     private var audioPlayer: AVAudioPlayer?
+
+    private var voiceID: String {
+        let stored = UserDefaults.standard.string(forKey: "SelectedVoiceID")
+        if let stored, !stored.isEmpty { return stored }
+        return defaultVoiceID
+    }
 
     override init() {
         let env = ProcessInfo.processInfo.environment
@@ -27,10 +33,10 @@ final class TTSPlayer: NSObject, AVAudioPlayerDelegate {
             return env["ELEVENLABS_API_KEY"] ?? ""
         }()
 
-        self.voiceID = {
+        self.defaultVoiceID = {
             let fromInfo = readInfoString("ElevenLabsVoiceID")
             if !fromInfo.isEmpty { return fromInfo }
-            return env["ELEVENLABS_VOICE_ID"] ?? "JBFqnCBsd6RMkjVDRZzb"
+            return env["ELEVENLABS_VOICE_ID"] ?? "TxWZERZ5Hc6h9dGxVmXa"
         }()
 
         // Higher-quality default model for more realistic playback.

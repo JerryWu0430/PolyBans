@@ -2,6 +2,7 @@ import SwiftUI
 
 struct ContentView: View {
     @ObservedObject var vm: PolyBansSessionViewModel
+    @AppStorage("SelectedVoiceID") private var selectedVoiceID: String = "TxWZERZ5Hc6h9dGxVmXa"
 
     // Reads from Info.plist first so values are editable in Xcode.
     private var relayHost: String {
@@ -85,6 +86,26 @@ struct ContentView: View {
                             )
                         }
                         .frame(maxWidth: .infinity)
+                        .glassCard()
+                        .padding(.horizontal)
+
+                        // MARK: - Voice Persona Selection
+                        VStack(alignment: .leading, spacing: 10) {
+                            Text("Voice Persona")
+                                .font(.caption.bold())
+                                .foregroundStyle(PolyBansTheme.textSecondary)
+                                .textCase(.uppercase)
+                            
+                            Picker("Voice Persona", selection: $selectedVoiceID) {
+                                Text("Jerry B").tag("TxWZERZ5Hc6h9dGxVmXa")
+                                Text("The Fox").tag("h1IssowVS2h4nL5ZbkkK")
+                                Text("Erin").tag("wa4sQVgbDDzUDEzJwch3")
+                                Text("Aria").tag("TC0Zp7WVFzhA8zpTlRqV")
+                            }
+                            .pickerStyle(.segmented)
+                            // Segmented picker on iOS looks better with color constraints
+                            .colorScheme(.dark)
+                        }
                         .glassCard()
                         .padding(.horizontal)
 
