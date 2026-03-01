@@ -56,6 +56,7 @@ final class TTSPlayer: NSObject, AVAudioPlayerDelegate {
     }
 
     func speak(_ text: String) {
+        print("[TTSPlayer] speak() called: \(text.prefix(50))...")
         queue.append(text)
         playNext()
     }
@@ -69,33 +70,6 @@ final class TTSPlayer: NSObject, AVAudioPlayerDelegate {
 
     // MARK: - Private
 
-    private func configureAudioSession() {
-        let session = AVAudioSession.sharedInstance()
-        do {
-            try session.setCategory(
-                .playAndRecord,
-                mode: .voiceChat,
-                options: [.allowBluetoothHFP, .allowBluetoothA2DP]
-            )
-            try session.setActive(true)
-            routeToBluetoothIfAvailable(session)
-        } catch {
-            print("[TTSPlayer] Audio session setup failed: \(error)")
-        }
-    }
-
-    private func routeToBluetoothIfAvailable(_ session: AVAudioSession) {
-        guard let inputs = session.availableInputs else { return }
-        guard let bluetoothInput = inputs.first(where: {
-            $0.portType == .bluetoothHFP || $0.portType == .bluetoothLE
-        }) else { return }
-
-        do {
-            try session.setPreferredInput(bluetoothInput)
-        } catch {
-            print("[TTSPlayer] Failed to set Bluetooth preferred input: \(error)")
-        }
-    }
 
     private func playNext() {
         guard !isSpeaking, let text = queue.first else { return }
@@ -111,7 +85,9 @@ final class TTSPlayer: NSObject, AVAudioPlayerDelegate {
 
         Task {
             do {
+                print("[TTSPlayer] Synthesizing: \(text.prefix(50))...")
                 let audioData = try await synthesizeAudio(text: text)
+                print("[TTSPlayer] Synthesis complete, \(audioData.count) bytes")
                 startPlayback(with: audioData)
             } catch {
                 print("[TTSPlayer] ElevenLabs synthesis failed: \(error)")
@@ -157,11 +133,13 @@ final class TTSPlayer: NSObject, AVAudioPlayerDelegate {
 
     private func startPlayback(with data: Data) {
         do {
-            configureAudioSession()
+            // SpeechTranscriber already configured .playAndRecord session
+            // Just play on existing session - no reconfiguration needed
             let player = try AVAudioPlayer(data: data)
             player.delegate = self
             player.prepareToPlay()
             audioPlayer = player
+            print("[TTSPlayer] Starting playback, duration: \(player.duration)s")
             guard player.play() else {
                 throw NSError(domain: "TTSPlayer", code: 3, userInfo: [NSLocalizedDescriptionKey: "Failed to start audio playback"])
             }

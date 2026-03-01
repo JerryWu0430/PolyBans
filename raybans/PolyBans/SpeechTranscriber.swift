@@ -70,31 +70,19 @@ final class SpeechTranscriber: ObservableObject {
     private func configureAudioSessionAndStart() {
         let audioSession = AVAudioSession.sharedInstance()
         do {
+            // Use .default mode (not .voiceChat) and avoid .allowBluetoothHFP
+            // to prevent exclusive Bluetooth control that conflicts with glasses
             try audioSession.setCategory(
                 .playAndRecord,
-                mode: .voiceChat,
-                options: [.allowBluetoothHFP, .allowBluetoothA2DP]
+                mode: .default,
+                options: [.allowBluetoothA2DP, .defaultToSpeaker, .mixWithOthers]
             )
             try audioSession.setActive(true, options: .notifyOthersOnDeactivation)
-            routeToBluetoothIfAvailable(audioSession)
         } catch {
             print("[SpeechTranscriber] Audio session error: \(error)")
             return
         }
         startRecognition()
-    }
-
-    private func routeToBluetoothIfAvailable(_ session: AVAudioSession) {
-        guard let inputs = session.availableInputs else { return }
-        guard let bluetoothInput = inputs.first(where: {
-            $0.portType == .bluetoothHFP || $0.portType == .bluetoothLE
-        }) else { return }
-
-        do {
-            try session.setPreferredInput(bluetoothInput)
-        } catch {
-            print("[SpeechTranscriber] Failed to set Bluetooth preferred input: \(error)")
-        }
     }
 
     private func startRecognition() {
