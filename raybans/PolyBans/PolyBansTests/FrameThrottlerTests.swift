@@ -1,61 +1,72 @@
 import XCTest
 @testable import PolyBans
 
+@MainActor
 final class FrameThrottlerTests: XCTestCase {
 
+    private var throttler: FrameThrottler!
+    private var callCount = 0
+
+    override func setUp() {
+        super.setUp()
+        callCount = 0
+    }
+
+    override func tearDown() {
+        throttler = nil
+        super.tearDown()
+    }
+
     private func makeTestImage() -> UIImage {
-        UIGraphicsBeginImageContext(CGSize(width: 1, height: 1))
-        defer { UIGraphicsEndImageContext() }
-        return UIGraphicsGetImageFromCurrentImageContext()!
+        let renderer = UIGraphicsImageRenderer(size: CGSize(width: 1, height: 1))
+        return renderer.image { ctx in
+            UIColor.red.setFill()
+            ctx.fill(CGRect(x: 0, y: 0, width: 1, height: 1))
+        }
     }
 
     func testFirstFrameAlwaysFires() {
-        let throttler = FrameThrottler(interval: 1.0)
-        var callCount = 0
-        throttler.onThrottledFrame = { _ in callCount += 1 }
+        throttler = FrameThrottler(interval: 1.0)
+        throttler.onThrottledFrame = { [weak self] _ in self?.callCount += 1 }
 
         throttler.submit(makeTestImage())
         XCTAssertEqual(callCount, 1, "First frame should always fire")
     }
 
     func testSecondFrameWithinIntervalIsSuppressed() {
-        let throttler = FrameThrottler(interval: 10.0) // Long interval
-        var callCount = 0
-        throttler.onThrottledFrame = { _ in callCount += 1 }
+        throttler = FrameThrottler(interval: 10.0)
+        throttler.onThrottledFrame = { [weak self] _ in self?.callCount += 1 }
 
         throttler.submit(makeTestImage())
-        throttler.submit(makeTestImage()) // Should be suppressed
+        throttler.submit(makeTestImage())
         XCTAssertEqual(callCount, 1, "Second frame within interval should be suppressed")
     }
 
     func testFrameAfterIntervalFires() {
-        let throttler = FrameThrottler(interval: 0.05) // 50ms interval
-        var callCount = 0
-        throttler.onThrottledFrame = { _ in callCount += 1 }
+        throttler = FrameThrottler(interval: 0.05)
+        throttler.onThrottledFrame = { [weak self] _ in self?.callCount += 1 }
 
         throttler.submit(makeTestImage())
         XCTAssertEqual(callCount, 1)
 
-        // Wait for interval to pass
         let expectation = expectation(description: "wait for interval")
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-            throttler.submit(self.makeTestImage())
-            XCTAssertEqual(callCount, 2, "Frame after interval should fire")
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { [self] in
+            self.throttler.submit(self.makeTestImage())
+            XCTAssertEqual(self.callCount, 2, "Frame after interval should fire")
             expectation.fulfill()
         }
         wait(for: [expectation], timeout: 1.0)
     }
 
     func testNilCallbackIsSafe() {
-        let throttler = FrameThrottler(interval: 1.0)
+        throttler = FrameThrottler(interval: 1.0)
         // onThrottledFrame is nil by default — submit should not crash
         throttler.submit(makeTestImage())
     }
 
     func testResetAllowsImmediateFrame() {
-        let throttler = FrameThrottler(interval: 10.0)
-        var callCount = 0
-        throttler.onThrottledFrame = { _ in callCount += 1 }
+        throttler = FrameThrottler(interval: 10.0)
+        throttler.onThrottledFrame = { [weak self] _ in self?.callCount += 1 }
 
         throttler.submit(makeTestImage())
         XCTAssertEqual(callCount, 1)
