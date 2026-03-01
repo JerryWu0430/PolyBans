@@ -69,6 +69,23 @@ final class TTSPlayer: NSObject, AVAudioPlayerDelegate {
 
     // MARK: - Private
 
+    /// Ensure audio session is compatible with glasses (no exclusive HFP)
+    private func ensureAudioSession() {
+        let session = AVAudioSession.sharedInstance()
+        // Only configure if not already active - avoid disrupting SpeechTranscriber
+        guard !session.isOtherAudioPlaying else { return }
+        do {
+            try session.setCategory(
+                .playAndRecord,
+                mode: .default,
+                options: [.allowBluetoothA2DP, .defaultToSpeaker, .mixWithOthers]
+            )
+            try session.setActive(true, options: .notifyOthersOnDeactivation)
+        } catch {
+            print("[TTSPlayer] Audio session setup failed: \(error)")
+        }
+    }
+
     private func playNext() {
         guard !isSpeaking, let text = queue.first else { return }
         queue.removeFirst()
@@ -129,9 +146,7 @@ final class TTSPlayer: NSObject, AVAudioPlayerDelegate {
 
     private func startPlayback(with data: Data) {
         do {
-            // Don't reconfigure audio session - SpeechTranscriber already set up
-            // .playAndRecord which supports both mic input AND audio playback.
-            // Reconfiguring would disrupt the speech recognition audio engine.
+            ensureAudioSession()
             let player = try AVAudioPlayer(data: data)
             player.delegate = self
             player.prepareToPlay()
