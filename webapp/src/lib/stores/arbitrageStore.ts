@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import { useShallow } from "zustand/react/shallow";
 import type { Market } from "../types/polymarket";
 import type { ArbitrageOpp } from "../websocket/types";
 import type { PolymarketMarket, PolymarketAnalysis } from "../types/polymarket-stream";
@@ -106,10 +107,12 @@ export const useArbitrageStore = create<ArbitrageState & ArbitrageActions>(
 
 // Selector for filtered opportunities
 export const useFilteredOpportunities = () =>
-  useArbitrageStore((state) =>
-    state.opportunities.filter(
-      (opp) =>
-        opp.confidence >= state.filters.minConfidence &&
-        opp.spread >= state.filters.minSpread
+  useArbitrageStore(
+    useShallow((state) =>
+      state.opportunities.filter(
+        (opp) =>
+          opp.confidence >= state.filters.minConfidence &&
+          opp.spread >= state.filters.minSpread
+      )
     )
   );
