@@ -53,7 +53,7 @@ export interface SearchMarketResult {
 /**
  * Parse JSON array string safely
  */
-function parseJsonArray(str: string | undefined): string[] {
+export function parseJsonArray(str: string | undefined): string[] {
   if (!str) return [];
   try {
     const parsed = JSON.parse(str);
@@ -66,7 +66,7 @@ function parseJsonArray(str: string | undefined): string[] {
 /**
  * Transform raw API market data to UI-friendly format (backward compat).
  */
-function transformMarkets(rawMarkets: GammaMarket[] | undefined): MarketOutcome[] {
+export function transformMarkets(rawMarkets: GammaMarket[] | undefined): MarketOutcome[] {
   if (!rawMarkets || !Array.isArray(rawMarkets)) return [];
 
   const results: MarketOutcome[] = [];
@@ -93,7 +93,7 @@ function transformMarkets(rawMarkets: GammaMarket[] | undefined): MarketOutcome[
  * Transform raw markets to SubMarket[] for multi-outcome events.
  * Filters out placeholder markets (null prices, 0 volume).
  */
-function transformToSubMarkets(rawMarkets: GammaMarket[] | undefined): SubMarket[] {
+export function transformToSubMarkets(rawMarkets: GammaMarket[] | undefined): SubMarket[] {
   if (!rawMarkets || !Array.isArray(rawMarkets)) return [];
 
   return rawMarkets
