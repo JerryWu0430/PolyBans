@@ -71,7 +71,7 @@ export function transformMarkets(rawMarkets: GammaMarket[] | undefined): MarketO
 
   const results: MarketOutcome[] = [];
 
-  for (const market of rawMarkets.slice(0, 4)) {
+  for (const market of rawMarkets.slice(0, 5)) {
     const outcomes = parseJsonArray(market.outcomes);
     const prices = parseJsonArray(market.outcomePrices);
     const tokenIds = parseJsonArray(market.clobTokenIds);
@@ -228,5 +228,5 @@ export async function fetchMarkets(
   }
 
   markets.sort((a, b) => (Number(b.volume) || 0) - (Number(a.volume) || 0));
-  return markets.slice(0, 4);
+  return markets.slice(0, 5);
 }

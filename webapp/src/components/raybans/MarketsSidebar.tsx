@@ -37,7 +37,7 @@ export function MarketsSidebar({
             <span className="text-sm font-bold tracking-wide">LIVE MARKETS</span>
           </div>
           {markets.length > 0 && (
-            <span className="px-1.5 py-0.5 text-[10px] font-mono bg-chart-4/20 text-chart-4 rounded">
+            <span className="px-1.5 py-0.5 text-xs font-mono bg-chart-4/20 text-chart-4 rounded">
               {markets.length}
             </span>
           )}
@@ -57,7 +57,7 @@ export function MarketsSidebar({
                 </p>
               </div>
             ) : (
-              <div className="grid grid-cols-4 gap-2">
+              <div className="grid grid-cols-5 gap-2">
                 {markets.map((market) => (
                   <MarketCard
                     key={market.id}
@@ -76,13 +76,13 @@ export function MarketsSidebar({
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-1.5">
                 <Brain className="h-3.5 w-3.5 text-chart-4" />
-                <span className="text-[10px] font-bold uppercase tracking-wider">AI Strategy</span>
+                <span className="text-xs font-bold uppercase tracking-wider">AI Strategy</span>
               </div>
               <div className="flex items-center gap-1.5">
-                <span className="px-1.5 py-0.5 text-[9px] font-bold uppercase rounded bg-muted text-muted-foreground">
+                <span className="px-1.5 py-0.5 text-xs font-bold uppercase rounded bg-muted text-muted-foreground">
                   {strategy.sentiment}
                 </span>
-                <span className="px-1.5 py-0.5 text-[9px] font-mono rounded border border-border/50 text-muted-foreground">
+                <span className="px-1.5 py-0.5 text-xs font-mono rounded border border-border/50 text-muted-foreground">
                   {strategy.confidence}
                 </span>
               </div>
@@ -95,27 +95,27 @@ export function MarketsSidebar({
                 <div className="p-2 rounded bg-muted/40 border border-border/30">
                   <div className="flex items-center gap-1 mb-0.5">
                     <Sparkles className="h-2.5 w-2.5 text-muted-foreground" />
-                    <span className="text-[8px] font-bold text-muted-foreground uppercase">Edge</span>
+                    <span className="text-xs font-bold text-muted-foreground uppercase">Edge</span>
                   </div>
-                  <p className="text-[10px] text-foreground/70 line-clamp-2">{strategy.edge}</p>
+                  <p className="text-xs text-foreground/70 line-clamp-2">{strategy.edge}</p>
                 </div>
               )}
               {strategy.undervalued && (
                 <div className="p-2 rounded bg-muted/40 border border-border/30">
                   <div className="flex items-center gap-1 mb-0.5">
                     <Target className="h-2.5 w-2.5 text-muted-foreground" />
-                    <span className="text-[8px] font-bold text-muted-foreground uppercase">Target</span>
+                    <span className="text-xs font-bold text-muted-foreground uppercase">Target</span>
                   </div>
-                  <p className="text-[10px] text-foreground/70 line-clamp-2">{strategy.undervalued}</p>
+                  <p className="text-xs text-foreground/70 line-clamp-2">{strategy.undervalued}</p>
                 </div>
               )}
               {strategy.risk && (
                 <div className="p-2 rounded bg-muted/40 border border-border/30">
                   <div className="flex items-center gap-1 mb-0.5">
                     <AlertTriangle className="h-2.5 w-2.5 text-muted-foreground" />
-                    <span className="text-[8px] font-bold text-muted-foreground uppercase">Risk</span>
+                    <span className="text-xs font-bold text-muted-foreground uppercase">Risk</span>
                   </div>
-                  <p className="text-[10px] text-foreground/70 line-clamp-2">{strategy.risk}</p>
+                  <p className="text-xs text-foreground/70 line-clamp-2">{strategy.risk}</p>
                 </div>
               )}
             </div>
@@ -127,7 +127,7 @@ export function MarketsSidebar({
           <div className="border-t border-border/30 p-3 bg-muted/20">
             <div className="flex items-center gap-1.5 mb-1.5">
               <Brain className="h-3 w-3 text-muted-foreground" />
-              <span className="text-[10px] font-bold text-muted-foreground uppercase">Analysis</span>
+              <span className="text-xs font-bold text-muted-foreground uppercase">Analysis</span>
             </div>
             <p className="text-xs text-foreground/80 line-clamp-2">{latestAnalysis.reason}</p>
           </div>
@@ -150,7 +150,7 @@ function MarketCard({
   return (
     <button
       onClick={onClick}
-      className="w-full h-full text-left p-2 rounded-lg border border-border/50 bg-card hover:border-primary/40 hover:bg-card/80 transition-all group flex flex-col"
+      className="w-full aspect-square text-left p-2 rounded-lg border border-border/50 bg-card hover:border-primary/40 hover:bg-card/80 transition-all group flex flex-col"
     >
       {/* Header */}
       <div className="flex gap-2 mb-1">
@@ -161,14 +161,14 @@ function MarketCard({
             className="w-7 h-7 rounded object-cover shrink-0 border border-border/30"
           />
         )}
-        <h3 className="text-[11px] font-medium leading-tight line-clamp-2 group-hover:text-primary transition-colors flex-1">
+        <h3 className="text-sm font-medium leading-tight line-clamp-2 group-hover:text-primary transition-colors flex-1">
           {market.question || market.title}
         </h3>
       </div>
 
       {/* Volume */}
       {market.volume && (
-        <p className="text-[9px] font-mono text-muted-foreground mb-1">
+        <p className="text-xs font-mono text-muted-foreground mb-1">
           ${parseFloat(market.volume).toLocaleString()}
         </p>
       )}
@@ -178,7 +178,7 @@ function MarketCard({
         {market.subMarkets && market.subMarkets.length > 1 ? (
           <>
             {market.subMarkets.slice(0, 2).map((sm, i) => (
-              <div key={i} className="flex items-center justify-between text-[9px]">
+              <div key={i} className="flex items-center justify-between text-xs">
                 <span className="text-muted-foreground truncate mr-1">
                   {sm.groupItemTitle}
                 </span>
@@ -197,14 +197,14 @@ function MarketCard({
               </div>
             ))}
             {market.subMarkets.length > 2 && (
-              <span className="text-[8px] text-muted-foreground">
+              <span className="text-xs text-muted-foreground">
                 +{market.subMarkets.length - 2}
               </span>
             )}
           </>
         ) : market.markets && market.markets.length > 0 ? (
           market.markets.slice(0, 2).map((outcome, i) => (
-            <div key={i} className="flex items-center justify-between text-[9px]">
+            <div key={i} className="flex items-center justify-between text-xs">
               <span className="text-muted-foreground truncate mr-1">
                 {outcome.outcome}
               </span>
