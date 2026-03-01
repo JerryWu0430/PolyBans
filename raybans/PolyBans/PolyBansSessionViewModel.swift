@@ -62,11 +62,13 @@ final class PolyBansSessionViewModel: ObservableObject {
         // 0. Start TTS WebSocket listener
         Task {
             await client.setOnTtsReceived { [weak self] text in
+                print("[PolyBans] TTS received from relay: \(text.prefix(50))...")
                 Task { @MainActor in
                     self?.ttsPlayer.speak(text)
                 }
             }
             await client.startListening()
+            print("[PolyBans] TTS WebSocket listener started")
         }
 
         // 1. Health check

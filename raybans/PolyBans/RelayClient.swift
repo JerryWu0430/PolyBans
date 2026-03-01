@@ -156,11 +156,16 @@ actor RelayClient {
     private func handleReceive(result: Result<URLSessionWebSocketTask.Message, Error>, task: URLSessionWebSocketTask) {
         switch result {
         case .success(let message):
+            print("[RelayClient] WebSocket received message")
             switch message {
             case .string(let text):
+                print("[RelayClient] Raw WS text: \(text.prefix(100))")
                 if let data = text.data(using: .utf8),
                    let msg = try? decoder.decode(TtsWsMessage.self, from: data) {
+                    print("[RelayClient] Decoded TTS: \(msg.text.prefix(50))")
                     onTtsReceived?(msg.text)
+                } else {
+                    print("[RelayClient] Failed to decode TTS message")
                 }
             case .data(let data):
                 if let msg = try? decoder.decode(TtsWsMessage.self, from: data) {
@@ -171,7 +176,8 @@ actor RelayClient {
             }
             receiveMessage(task: task)
 
-        case .failure:
+        case .failure(let error):
+            print("[RelayClient] WebSocket error: \(error)")
             // Auto-reconnect after 2 seconds
             guard isListening else { return }
             Task {

@@ -56,6 +56,7 @@ final class TTSPlayer: NSObject, AVAudioPlayerDelegate {
     }
 
     func speak(_ text: String) {
+        print("[TTSPlayer] speak() called: \(text.prefix(50))...")
         queue.append(text)
         playNext()
     }
