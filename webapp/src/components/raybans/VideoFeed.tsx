@@ -81,7 +81,6 @@ export function VideoFeed({
         {frameUrl && !imageError ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
-            key={frameUrl}
             src={frameUrl}
             alt="Ray-Bans video feed"
             className="w-full h-full object-cover"
