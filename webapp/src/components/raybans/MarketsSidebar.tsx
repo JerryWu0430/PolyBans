@@ -4,20 +4,42 @@ import { cn } from "@/lib/utils";
 import { TrendingUp, Radio, Brain, Sparkles, Target, AlertTriangle } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Terminal } from "./Terminal";
-import type { PolymarketMarket } from "@/lib/types/polymarket-stream";
+import type { PolymarketMarket, TradeConfirmationState } from "@/lib/types/polymarket-stream";
 import { useArbitrageStore } from "@/lib/stores/arbitrageStore";
+
+type CardHighlight = "pending" | "confirmed" | "cancelled" | null;
 
 interface MarketsSidebarProps {
   markets: PolymarketMarket[];
   isStreaming?: boolean;
   className?: string;
+  confirmationState?: TradeConfirmationState;
+  pendingMarketId?: string;
 }
 
 export function MarketsSidebar({
   markets,
   isStreaming = false,
   className,
+  confirmationState,
+  pendingMarketId,
 }: MarketsSidebarProps) {
+  // Determine highlight for pending market
+  const getHighlight = (marketId: string): CardHighlight => {
+    if (marketId !== pendingMarketId) return null;
+    switch (confirmationState) {
+      case "market_announced":
+      case "awaiting_confirmation":
+      case "executing":
+        return "pending";
+      case "done":
+        return "confirmed";
+      case "cancelled":
+        return "cancelled";
+      default:
+        return null;
+    }
+  };
   const openOrderModal = useArbitrageStore((s) => s.openOrderModal);
   const latestAnalysis = useArbitrageStore((s) => s.latestAnalysis);
   const strategy = latestAnalysis?.strategy;
@@ -62,6 +84,7 @@ export function MarketsSidebar({
                   <MarketCard
                     key={market.id}
                     market={market}
+                    highlight={getHighlight(market.id)}
                     onClick={() => openOrderModal(market)}
                   />
                 ))}
@@ -142,15 +165,26 @@ export function MarketsSidebar({
 
 function MarketCard({
   market,
+  highlight,
   onClick,
 }: {
   market: PolymarketMarket;
+  highlight: CardHighlight;
   onClick: () => void;
 }) {
+  const highlightStyles = {
+    pending: "border-yellow-500 bg-yellow-500/10 ring-2 ring-yellow-500/30",
+    confirmed: "border-green-500 bg-green-500/10 ring-2 ring-green-500/30",
+    cancelled: "border-red-500 bg-red-500/10 ring-2 ring-red-500/30",
+  };
+
   return (
     <button
       onClick={onClick}
-      className="w-full aspect-square text-left p-2 rounded-lg border border-border/50 bg-card hover:border-primary/40 hover:bg-card/80 transition-all group flex flex-col"
+      className={cn(
+        "w-full aspect-square text-left p-2 rounded-lg border border-border/50 bg-card hover:border-primary/40 hover:bg-card/80 transition-all group flex flex-col",
+        highlight && highlightStyles[highlight]
+      )}
     >
       {/* Header */}
       <div className="flex gap-2 mb-1">

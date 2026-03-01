@@ -339,6 +339,8 @@ export default function RayBansPage() {
           <MarketsSidebar
             markets={streamedMarkets}
             isStreaming={isStreaming}
+            confirmationState={tradeConfirmation.confirmationState}
+            pendingMarketId={tradeConfirmation.pendingMarket?.id}
           />
         </div>
       </div>
