@@ -74,10 +74,10 @@ final class TTSPlayer: NSObject, AVAudioPlayerDelegate {
         do {
             try session.setCategory(
                 .playAndRecord,
-                mode: .voiceChat,
-                options: [.allowBluetoothHFP, .allowBluetoothA2DP]
+                mode: .default,
+                options: [.allowBluetoothA2DP, .defaultToSpeaker, .mixWithOthers]
             )
-            try session.setActive(true)
+            try session.setActive(true, options: .notifyOthersOnDeactivation)
             routeToBluetoothIfAvailable(session)
         } catch {
             print("[TTSPlayer] Audio session setup failed: \(error)")
