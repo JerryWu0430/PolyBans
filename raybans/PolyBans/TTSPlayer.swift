@@ -69,22 +69,6 @@ final class TTSPlayer: NSObject, AVAudioPlayerDelegate {
 
     // MARK: - Private
 
-    /// Ensure audio session is compatible with glasses (no exclusive HFP)
-    private func ensureAudioSession() {
-        let session = AVAudioSession.sharedInstance()
-        // Only configure if not already active - avoid disrupting SpeechTranscriber
-        guard !session.isOtherAudioPlaying else { return }
-        do {
-            try session.setCategory(
-                .playAndRecord,
-                mode: .default,
-                options: [.allowBluetoothA2DP, .defaultToSpeaker, .mixWithOthers]
-            )
-            try session.setActive(true, options: .notifyOthersOnDeactivation)
-        } catch {
-            print("[TTSPlayer] Audio session setup failed: \(error)")
-        }
-    }
 
     private func playNext() {
         guard !isSpeaking, let text = queue.first else { return }
@@ -100,7 +84,9 @@ final class TTSPlayer: NSObject, AVAudioPlayerDelegate {
 
         Task {
             do {
+                print("[TTSPlayer] Synthesizing: \(text.prefix(50))...")
                 let audioData = try await synthesizeAudio(text: text)
+                print("[TTSPlayer] Synthesis complete, \(audioData.count) bytes")
                 startPlayback(with: audioData)
             } catch {
                 print("[TTSPlayer] ElevenLabs synthesis failed: \(error)")
@@ -146,11 +132,13 @@ final class TTSPlayer: NSObject, AVAudioPlayerDelegate {
 
     private func startPlayback(with data: Data) {
         do {
-            ensureAudioSession()
+            // SpeechTranscriber already configured .playAndRecord session
+            // Just play on existing session - no reconfiguration needed
             let player = try AVAudioPlayer(data: data)
             player.delegate = self
             player.prepareToPlay()
             audioPlayer = player
+            print("[TTSPlayer] Starting playback, duration: \(player.duration)s")
             guard player.play() else {
                 throw NSError(domain: "TTSPlayer", code: 3, userInfo: [NSLocalizedDescriptionKey: "Failed to start audio playback"])
             }
